@@ -72,7 +72,7 @@ class Registration extends StatelessWidget {
                       ),
                       onPressed: () {
                         if(formKey.currentState!.validate()){
-                          Authentication().registerUser(username.text.trim(), email.text.trim(), password.text.trim());
+                          Authentication().registerUser(context, username.text.trim(), email.text.trim(), password.text.trim());
                         }
                       }
                   ),
