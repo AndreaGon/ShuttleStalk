@@ -1,6 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:shuttle_stalk/view/authentication/login_view.dart';
+import 'package:shuttle_stalk/view/booking/booking_view.dart';
+import 'package:shuttle_stalk/view/main_view.dart';
 
 class Authentication {
 
@@ -13,7 +16,11 @@ class Authentication {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text("Successfully registered user!"),
       ));
-      Navigator.pushNamed(context, '/login');
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => Login(),
+        ),
+      );
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
         print('The password provided is too weak.');
@@ -35,6 +42,12 @@ class Authentication {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text("Logged IN!"),
       ));
+
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => MainView(),
+        ),
+      );
     } on FirebaseAuthException catch (e) {
       print(e);
       if (e.code == 'user-not-found') {
