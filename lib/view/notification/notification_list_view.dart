@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shuttle_stalk/res/colors.dart';
 import 'package:shuttle_stalk/res/layout/notif_card_layout.dart';
 import 'package:shuttle_stalk/view_model/notification/notification_view_model.dart';
 
@@ -23,8 +24,8 @@ class _NotificationListState extends State<NotificationList> {
       appBar: AppBar(
           toolbarHeight: 75,
           automaticallyImplyLeading: false,
-          title: Center(child: Text("Notifications",style: TextStyle(color:Colors.black,fontSize:20, fontWeight: FontWeight.bold))),
-          backgroundColor: Colors.white
+          title: Center(child: Text("Notifications",style: TextStyle(color:Colors.white,fontSize:20, fontWeight: FontWeight.bold))),
+          backgroundColor: lightblue
       ),
       body: Row(
         mainAxisAlignment: MainAxisAlignment.start,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../res/layout/bottom_nav_layout.dart';
 import 'booking/booking_view.dart';
+import 'home/home_view.dart';
 import 'notification/notification_list_view.dart';
 
 class MainView extends StatefulWidget {
@@ -14,6 +15,7 @@ class MainView extends StatefulWidget {
 class _MainViewState extends State<MainView> {
   int selectedIndex = 0;
   List page = [
+    Home(),
     Booking(),
     NotificationList()
   ];

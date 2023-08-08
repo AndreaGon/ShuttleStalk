@@ -38,7 +38,7 @@ class NotifCardLayout extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => NotificationDetails(title: this.title),
+                    builder: (context) => NotificationDetails(title: this.title, content: this.snippet, datetime: this.date),
                   ),
                 );
               },
