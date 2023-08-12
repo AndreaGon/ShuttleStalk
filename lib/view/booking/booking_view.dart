@@ -81,9 +81,9 @@ class _BookingState extends State<Booking> {
               width: MediaQuery.of(context).size.width,
               height: 50.0,
               child: ElevatedButton(
-                child: Text("Confirm Booking"),
+                child: Text("Confirm Booking", style: TextStyle(color: darkblue),),
                 style: ElevatedButton.styleFrom(
-                  primary: lightblue,
+                  primary: skyblue,
                   elevation: 0,
                 ),
                 onPressed: () {},
