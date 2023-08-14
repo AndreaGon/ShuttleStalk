@@ -1,11 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../colors.dart';
+import '../../../res/colors.dart';
 
 class BookingDropdownLayout extends StatefulWidget {
-  List<String> items = [];
-  BookingDropdownLayout({Key? key, required this.items}) : super(key: key);
+  List<Map<String, dynamic>> items;
+  Function(String) onItemSelected;
+
+  BookingDropdownLayout({Key? key, required this.items, required this.onItemSelected}) : super(key: key);
 
   @override
   State<BookingDropdownLayout> createState() => _BookingDropdownLayoutState();
@@ -16,7 +18,7 @@ class _BookingDropdownLayoutState extends State<BookingDropdownLayout> {
 
   @override
   void initState() {
-    dropdownValue = widget.items.first;
+    dropdownValue = widget.items.first["value"];
   }
 
   @override
@@ -34,22 +36,22 @@ class _BookingDropdownLayoutState extends State<BookingDropdownLayout> {
       child: Padding(
         padding: EdgeInsets.only(left: 10, right: 10),
         child: DropdownButtonHideUnderline(
-          child: DropdownButton<String>(
+          child: DropdownButton(
             isExpanded: true,
             value: dropdownValue,
             elevation: 16,
             style: const TextStyle(color: darkblue),
-            onChanged: (String? value) {
-              // This is called when the user selects an item.
+            onChanged: (value) {
+
               setState(() {
-                print("NEW VALUE: " + dropdownValue);
-                dropdownValue = value!;
+                dropdownValue = value!.toString();
+                widget.onItemSelected(dropdownValue);
               });
             },
-            items: widget.items.map<DropdownMenuItem<String>>((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
+            items: widget.items.map((value) {
+              return DropdownMenuItem(
+                value: value['value'],
+                child: Text(value["display"]),
               );
             }).toList(),
           ),

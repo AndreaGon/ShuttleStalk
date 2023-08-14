@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shuttle_stalk/res/colors.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shuttle_stalk/view/authentication/registration_view.dart';
-import 'package:shuttle_stalk/view_model/authentication_view_model.dart';
+import 'package:shuttle_stalk/view_model/authentication/authentication_view_model.dart';
 class Login extends StatelessWidget {
   final formKey = GlobalKey<FormState>();
   final username = TextEditingController();

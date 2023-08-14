@@ -4,15 +4,36 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shuttle_stalk/view/authentication/login_view.dart';
 import 'package:shuttle_stalk/view/booking/booking_view.dart';
 import 'package:shuttle_stalk/view/main_view.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Authentication {
 
-  Future<void> registerUser(BuildContext context, String user, String email, String password) async {
+  CollectionReference students = FirebaseFirestore.instance.collection('students');
+
+  Future<void> registerUser(BuildContext context, String fullname, String program, String ic_number, String month, String year, String email, String password) async {
     try {
       final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
+      students.add({
+        'fullname': fullname,
+        'program': program,
+        'ic_number': ic_number,
+        'graduation_month': month,
+        'graduation_year': year,
+        'email': email,
+        'userAuthId': credential.user?.uid,
+        'is_banned': false
+      })
+          .then((value) => {
+        students.doc(value.id).update({
+          "id": value.id
+        })
+      })
+          .catchError((error) => print("Failed to add book: $error"));
+
+
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text("Successfully registered user!"),
       ));

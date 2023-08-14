@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shuttle_stalk/res/colors.dart';
-import 'package:shuttle_stalk/res/layout/notif_card_layout.dart';
+import 'package:shuttle_stalk/view/notification/layout/notif_card_layout.dart';
 import 'package:shuttle_stalk/view_model/notification/notification_view_model.dart';
 
 class NotificationList extends StatefulWidget {
