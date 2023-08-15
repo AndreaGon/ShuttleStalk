@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../res/colors.dart';
 
 class BookingDropdownLayout extends StatefulWidget {
-  List<Map<String, dynamic>> items;
+  List<Map<dynamic, dynamic>> items;
   Function(String) onItemSelected;
 
   BookingDropdownLayout({Key? key, required this.items, required this.onItemSelected}) : super(key: key);
@@ -18,7 +18,7 @@ class _BookingDropdownLayoutState extends State<BookingDropdownLayout> {
 
   @override
   void initState() {
-    dropdownValue = widget.items.first["value"];
+    dropdownValue = (widget.items.first["value"].toString());
   }
 
   @override

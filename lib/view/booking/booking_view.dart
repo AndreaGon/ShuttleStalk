@@ -19,9 +19,10 @@ class _BookingState extends State<Booking> {
 
   final BookingVM bookingVM = BookingVM();
 
-  bool isVisible = false;
-  var listOfTime = [];
-  var listOfLocation = [];
+  bool isTimeLocationVisible = false;
+  bool isPickupDropoffVisible = false;
+  List<Map<dynamic, dynamic>> listOfTime = [];
+  List<Map<dynamic, dynamic>> listOfLocation = [];
   var shuttleData = {};
 
   @override
@@ -37,9 +38,9 @@ class _BookingState extends State<Booking> {
       body: FutureBuilder(
         future: bookingVM.getShuttleInfo(),
         builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
-          List<Map<String, dynamic>> listOfShuttleNames = [];
+          List<Map<String, dynamic>> listOfShuttleNames = [{"display": "- Select a value -", "value": "null"}];
 
-          var pickupDropoff = [{"display": "Pickup", "value": "pickup"},{"display": "Dropoff", "value": "dropoff"}];
+          var pickupDropoff = [{"display": "- Select a value -", "value": "null"},{"display": "Pickup", "value": "pickup"},{"display": "Dropoff", "value": "dropoff"}];
 
           if(!snapshot.hasData) {
             return Center(child: CircularProgressIndicator());
@@ -47,11 +48,7 @@ class _BookingState extends State<Booking> {
           else{
             for(int i = 0; i < snapshot.data.length; i++){
               listOfShuttleNames.add({"display": snapshot.data[i]["routeName"], "value": snapshot.data[i]["id"]});
-              // listOfTime.add(snapshot.data[i]["pickupTime"].toString());
-              // listOfLocation.add(snapshot.data[i]["route"].toString());
             }
-
-            print("CONTENT: " + listOfShuttleNames.toString());
           }
 
           return Column(
@@ -65,31 +62,78 @@ class _BookingState extends State<Booking> {
 
               Padding(
                   padding: EdgeInsets.only(bottom: 30, left: 25, right: 20, top: 10), //apply padding to all four sides
-                  child: BookingDropdownLayout(items: listOfShuttleNames, onItemSelected: (value) async => {
-                    await bookingVM.getShuttleInfoId(value).then((value) => {
-                      shuttleData = value.data()
-                    })
-                  },)
-              ),
-
-              Padding(
-                  padding: EdgeInsets.only(bottom: 5, left: 25, right: 20), //apply padding to all four sides
-                  child: Text("For...", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: darkblue))
-              ),
-
-              Padding(
-                  padding: EdgeInsets.only(bottom: 30, left: 25, right: 20, top: 5), //apply padding to all four sides
-                  child: BookingDropdownLayout(items: pickupDropoff, onItemSelected: (value)=> {
+                  child: BookingDropdownLayout(items: listOfShuttleNames, onItemSelected: (value) => {
                     setState(() {
-                      isVisible = true;
 
-                      print(value);
+                      if(value != "null"){
+                        bookingVM.getShuttleInfoId(value).then((value) => {
+                          shuttleData = value.data()
+                        });
+
+                        isPickupDropoffVisible = true;
+                      }
+                      else{
+                        isPickupDropoffVisible = false;
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text("Please select a route"),
+                        ));
+                      }
+
+
                     })
                   },)
               ),
 
               Visibility(
-                  visible: isVisible,
+                visible: isPickupDropoffVisible,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                        padding: EdgeInsets.only(bottom: 5, left: 25, right: 20), //apply padding to all four sides
+                        child: Text("For...", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: darkblue))
+                    ),
+
+                    Padding(
+                        padding: EdgeInsets.only(bottom: 30, left: 25, right: 20, top: 5), //apply padding to all four sides
+                        child: BookingDropdownLayout(items: pickupDropoff, onItemSelected: (value)=> {
+                          setState(() {
+                            isTimeLocationVisible = false;
+                            listOfTime = [];
+                            listOfLocation = [];
+                            if(value == "pickup"){
+                              for(int i = 0; i < shuttleData["pickupTime"].length; i++){
+                                listOfTime.add(shuttleData["pickupTime"][i]);
+                              }
+                            }
+                            else{
+                              for(int i = 0; i < shuttleData["dropoffTime"].length; i++){
+                                listOfTime.add(shuttleData["dropoffTime"][i]);
+                              }
+                            }
+
+                            for(int i = 0; i < shuttleData["route"].length; i++){
+                              listOfLocation.add({
+                                "display":shuttleData["route"][i]["display"],
+                                "value": {
+                                  "longitude": shuttleData["route"][i]["value"]["longitude"],
+                                  "latitude": shuttleData["route"][i]["value"]["latitude"]
+                                }.toString()
+                              });
+                            }
+
+                            print(listOfTime);
+                            isTimeLocationVisible = true;
+                          })
+                        },)
+                    )
+                  ]
+                )
+              ),
+
+              Visibility(
+                  visible: isTimeLocationVisible,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,7 +145,7 @@ class _BookingState extends State<Booking> {
 
                       Padding(
                           padding: EdgeInsets.only(bottom: 30, left: 25, right: 20, top: 10), //apply padding to all four sides
-                          child: BookingDropdownLayout(items: pickupDropoff, onItemSelected: (value)=>{
+                          child: BookingDropdownLayout(items: listOfTime, onItemSelected: (value)=>{
 
                           },)
                       ),
@@ -113,7 +157,7 @@ class _BookingState extends State<Booking> {
 
                       Padding(
                           padding: EdgeInsets.only(bottom: 5, left: 25, right: 20, top: 10), //apply padding to all four sides
-                          child: BookingDropdownLayout(items: pickupDropoff, onItemSelected: (value)=>{
+                          child: BookingDropdownLayout(items: listOfLocation, onItemSelected: (value)=>{
 
                           },)
                       ),
