@@ -17,17 +17,17 @@ class BottomNavLayout extends StatelessWidget {
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.bus_alert_rounded),
+            icon: Icon(Icons.airport_shuttle_rounded),
             label: 'Book',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.notifications),
             label: 'Notification',
           ),
-          // BottomNavigationBarItem(
-          //     icon: Icon(Icons.person),
-          //     label: 'Profile'
-          // ),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Profile'
+          ),
         ],
         currentIndex: selectedIndex, //New
         onTap: onClicked

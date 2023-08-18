@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shuttle_stalk/view/profile/profile_view.dart';
 
 import '../res/layout/bottom_nav_layout.dart';
 import 'booking/booking_view.dart';
@@ -17,7 +18,8 @@ class _MainViewState extends State<MainView> {
   List page = [
     Home(),
     Booking(),
-    NotificationList()
+    NotificationList(),
+    Profile()
   ];
 
   //Functions

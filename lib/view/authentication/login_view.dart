@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shuttle_stalk/res/colors.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -9,28 +10,30 @@ class Login extends StatelessWidget {
   final email = TextEditingController();
   final password = TextEditingController();
 
+  AuthenticationVM authVM = AuthenticationVM();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: darkblue,
       appBar: null,
-      body: new Container(
+      body: Container(
           margin: new EdgeInsets.all(15.0),
-        child: new Form(
+        child: Form(
           key: formKey,
-          child: new Column(
+          child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              new Text("Login to Shuttle Stalk",
+              const Text("Login to Shuttle Stalk",
                   style: TextStyle(height: 5, fontSize: 25, color: white)
               ),
-              new Container(
+              Container(
                 margin: const EdgeInsets.only(top: 20.0, bottom: 10.0),
-                child: new TextFormField(
+                child: TextFormField(
                     obscureText: false,
                     controller: email,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                         border: OutlineInputBorder(),
                         labelText: 'Email',
                         filled: true, //<-- SEE HERE
@@ -38,9 +41,9 @@ class Login extends StatelessWidget {
                     )
                 ),
               ),
-              new Container(
+              Container(
                 margin: const EdgeInsets.only(bottom: 10.0),
-                child: new TextFormField(
+                child: TextFormField(
                   obscureText: true,
                   controller: password,
                   decoration: InputDecoration(
@@ -51,26 +54,42 @@ class Login extends StatelessWidget {
                   ),
                 ),
               ),
-              new ElevatedButton(
-                  child: new Text("Login"),
+              ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     primary: lightblue,
                     minimumSize: Size.fromHeight(40), // fromHeight use double.infinity as width and 40 is the height
                   ),
                   onPressed: () {
                     if(formKey.currentState!.validate()){
-                      AuthenticationVM().loginUser(context, email.text.trim(), password.text.trim());
+                      var studentInfo;
+                      authVM.getCurrentUserWithEmail(email.text.trim()).then((value) => {
+                        studentInfo = value.docs.map((DocumentSnapshot doc) => doc.data() as Map<String, dynamic>).toList(),
+                        if(studentInfo.length == 0){
+                          authVM.loginUser(context, email.text.trim(), password.text.trim())
+                        }
+                        else{
+                          if(studentInfo[0]["is_active_account"]){
+                            authVM.loginUser(context, email.text.trim(), password.text.trim())
+                          }
+                          else{
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text("Your account is deactivated. Please see the AFM office"),
+                            ))
+                          }
+                        }
+                      });
                     }
-                  }
+                  },
+                  child: const Text("Login")
               ),
-              new Container(
+              Container(
                 margin: const EdgeInsets.only(top: 20.0, bottom: 20.0),
-                child: new Text("- or -",
+                child: const Text("- or -",
                     style: TextStyle(fontSize: 15, color: white)
                 ),
               ),
-              new ElevatedButton(
-                  child: new Text("Register"),
+              ElevatedButton(
+                  child: const Text("Register"),
                   style: ElevatedButton.styleFrom(
                     primary: lightblue,
                     minimumSize: Size.fromHeight(40), // fromHeight use double.infinity as width and 40 is the height

@@ -83,8 +83,24 @@ class AuthenticationVM {
     }
   }
 
+
   Future getCurrentUser(String userAuthId) async{
     return await students.where('userAuthId', isEqualTo: userAuthId)
         .get();
+  }
+
+  Future getCurrentUserWithEmail(String email) async{
+    return await students.where('email', isEqualTo: email)
+        .get();
+  }
+
+  Future deactivateAccount(String id) async{
+    return await students.doc(id).update({
+      "is_active_account": false
+    });
+  }
+
+  Future signOut() async{
+    await FirebaseAuth.instance.signOut();
   }
 }
