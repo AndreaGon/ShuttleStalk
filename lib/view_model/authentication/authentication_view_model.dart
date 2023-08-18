@@ -6,7 +6,7 @@ import 'package:shuttle_stalk/view/booking/booking_view.dart';
 import 'package:shuttle_stalk/view/main_view.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class Authentication {
+class AuthenticationVM {
 
   CollectionReference students = FirebaseFirestore.instance.collection('students');
 
@@ -81,5 +81,10 @@ class Authentication {
         ));
       }
     }
+  }
+
+  Future getCurrentUser(String userAuthId) async{
+    return await students.where('userAuthId', isEqualTo: userAuthId)
+        .get();
   }
 }

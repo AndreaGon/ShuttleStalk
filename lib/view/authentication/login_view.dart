@@ -59,7 +59,7 @@ class Login extends StatelessWidget {
                   ),
                   onPressed: () {
                     if(formKey.currentState!.validate()){
-                      Authentication().loginUser(context, email.text.trim(), password.text.trim());
+                      AuthenticationVM().loginUser(context, email.text.trim(), password.text.trim());
                     }
                   }
               ),
