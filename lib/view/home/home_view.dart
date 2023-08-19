@@ -1,8 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shuttle_stalk/res/colors.dart';
 
 import '../../res/layout/booking_card_layout.dart';
+import '../../view_model/authentication/authentication_view_model.dart';
+import '../../view_model/booking/booking_view_model.dart';
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
@@ -12,6 +16,22 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  AuthenticationVM authVM = AuthenticationVM();
+  BookingVM bookingVM = BookingVM();
+
+  // var currentUser;
+  //
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   authVM.getCurrentUser(FirebaseAuth.instance.currentUser!.uid).then((value) => {
+  //     setState((){
+  //       currentUser = value.docs.map((DocumentSnapshot doc) => doc.data() as Map<String, dynamic>).toList();
+  //       print(currentUser);
+  //     })
+  //   });
+  // }
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,15 +48,9 @@ class _HomeState extends State<Home> {
                     Column(
                       children: [
                         Padding(
-                            padding: EdgeInsets.only(top: 80.0, left: 40.0),
+                            padding: EdgeInsets.only(top: 100.0, left: 40.0),
                             child: Container(
-                              child: Text("Welcome,", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 30),),
-                            )
-                        ),
-                        Padding(
-                            padding: EdgeInsets.only(top: 10.0, left: 10.0),
-                            child: Container(
-                              child: Text("Andrea!", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 30),),
+                              child: Text("Hey there!", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 30),),
                             )
                         )
                       ],
@@ -78,15 +92,38 @@ class _HomeState extends State<Home> {
                                   padding: EdgeInsets.only(bottom: 10.0),
                                   child: Text("My Shuttle Booking", style: TextStyle(color: darkblue, fontWeight: FontWeight.bold, fontSize: 20.0),)
                               ),
-                              Expanded(
-                                child: ListView.builder(
-                                    scrollDirection: Axis.vertical,
-                                    shrinkWrap: true,
-                                    itemCount: 5,
-                                    itemBuilder: (context, index) {
-                                      return BookingCardLayout();
-                                    }
-                                ),
+
+                              FutureBuilder(
+                                future: authVM.getCurrentUser(FirebaseAuth.instance.currentUser!.uid),
+                                builder: (context, AsyncSnapshot snapshot) {
+                                  if(!snapshot.hasData) {
+                                    return Center(child: CircularProgressIndicator());
+                                  }
+
+                                  var currentUser;
+                                  currentUser = snapshot.data?.docs.map((DocumentSnapshot doc) => doc.data() as Map<String, dynamic>).toList();
+                                  return StreamBuilder(
+                                      stream: bookingVM.getAllBookingsStudentId(currentUser[0]["id"]),
+                                      builder: (context, AsyncSnapshot snapshot){
+                                        if(!snapshot.hasData) {
+                                          return Center(child: CircularProgressIndicator());
+                                        }
+                                        return Expanded(child: ListView.builder(
+                                            padding: const EdgeInsets.all(8),
+                                            itemCount:  snapshot.data?.docs.length,
+                                            itemBuilder: (context, index) {
+                                              var bookingInfo;
+                                              bookingInfo = snapshot.data?.docs.map((DocumentSnapshot doc) => doc.data() as Map<String, dynamic>).toList();
+                                              return BookingCardLayout(
+                                                routeName: bookingInfo[index]["routeName"],
+                                                departureTime: bookingInfo[index]["time"],
+                                                pickupDropoff: bookingInfo[index]["pickupDropoff"].toUpperCase(),
+                                              );
+                                            })
+                                        );
+                                      }
+                                  );
+                                }
                               )
                             ],
                           ),

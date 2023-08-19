@@ -47,7 +47,7 @@ class _ProfileState extends State<Profile> {
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                         content: Text("Logged out successfully!"),
                       )),
-                      Navigator.of(context).push(
+                      Navigator.of(context).pushReplacement(
                         MaterialPageRoute(
                           builder: (context) => Login(),
                         ),
@@ -86,7 +86,7 @@ class _ProfileState extends State<Profile> {
                             authVM.getCurrentUser(FirebaseAuth.instance.currentUser!.uid).then((value) => {
                               studentInfo = value.docs.map((DocumentSnapshot doc) => doc.data() as Map<String, dynamic>).toList(),
                               authVM.deactivateAccount(studentInfo[0]["id"]).then((value) => {
-                                Navigator.of(context).push(
+                                Navigator.of(context).pushReplacement(
                                   MaterialPageRoute(
                                     builder: (context) => Login(),
                                   ),

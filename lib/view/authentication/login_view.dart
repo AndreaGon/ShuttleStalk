@@ -95,7 +95,7 @@ class Login extends StatelessWidget {
                     minimumSize: Size.fromHeight(40), // fromHeight use double.infinity as width and 40 is the height
                   ),
                   onPressed: () {
-                    Navigator.of(context).push(
+                    Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
                         builder: (context) => Registration(),
                       ),

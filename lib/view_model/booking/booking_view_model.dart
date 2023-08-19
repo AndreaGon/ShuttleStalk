@@ -19,6 +19,12 @@ class BookingVM {
     return documentSnapshot;
   }
 
+
+  Stream getAllBookingsStudentId(String studentId){
+    Stream<QuerySnapshot> querySnapshot=  bookingRef.where('studentId', isEqualTo: studentId).snapshots();
+    return querySnapshot;
+  }
+
   Future<void> addBooking(Bookings bookings) async {
     bookingRef.add({
       "routeName": bookings.routeName,

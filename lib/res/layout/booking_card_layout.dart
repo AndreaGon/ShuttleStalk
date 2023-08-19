@@ -3,7 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:shuttle_stalk/res/colors.dart';
 
 class BookingCardLayout extends StatelessWidget {
-  const BookingCardLayout({Key? key}) : super(key: key);
+  final String routeName;
+  final String pickupDropoff;
+  final String departureTime;
+
+  const BookingCardLayout({Key? key, required this.routeName, required this.departureTime, required this.pickupDropoff}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -29,12 +33,12 @@ class BookingCardLayout extends StatelessWidget {
           children: [
             Padding(
               padding: EdgeInsets.only(top: 15.0, left: 15.0),
-              child: Text("Route Sg. Ara (Pickup)", style: TextStyle(color: darkblue, fontSize: 15.0, fontWeight: FontWeight.bold)),
+              child: Text("Route " + routeName + " (" + pickupDropoff + ")", style: TextStyle(color: darkblue, fontSize: 15.0, fontWeight: FontWeight.bold)),
             ),
 
             Padding(
               padding: EdgeInsets.only(top: 15.0, left: 15.0),
-              child: Text("Departure time from campus: 9:00AM", style: TextStyle(color: darkblue)),
+              child: Text("Departure time from campus: " + departureTime, style: TextStyle(color: darkblue)),
             ),
 
             Padding(

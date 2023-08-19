@@ -37,7 +37,7 @@ class AuthenticationVM {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text("Successfully registered user!"),
       ));
-      Navigator.of(context).push(
+      Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (context) => Login(),
         ),
@@ -64,7 +64,7 @@ class AuthenticationVM {
         content: Text("Logged IN!"),
       ));
 
-      Navigator.of(context).push(
+      Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (context) => MainView(),
         ),
