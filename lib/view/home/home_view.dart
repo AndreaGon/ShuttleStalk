@@ -108,6 +108,31 @@ class _HomeState extends State<Home> {
                                         if(!snapshot.hasData) {
                                           return Center(child: CircularProgressIndicator());
                                         }
+
+                                        if(snapshot.data.docs.length == 0){
+                                          return Padding(
+                                            padding: EdgeInsets.only(top: 20.0),
+                                            child:  Container(
+                                              height: 50,
+                                              width: MediaQuery.of(context).size.width,
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.grey.withOpacity(0.2),
+                                                    spreadRadius: 1,
+                                                    blurRadius: 7,
+                                                    offset: Offset(0, 3), // changes position of shadow
+                                                  ),
+                                                ],
+                                              ),
+                                              child: Padding(
+                                                  padding: EdgeInsets.only(top: 15.0, left: 15.0, right: 15.0),
+                                                  child: Text("No Bookings Yet!", style: TextStyle(color: darkblue, fontSize: 15.0))
+                                              ),
+                                            ),
+                                          );
+                                        }
                                         return Expanded(child: ListView.builder(
                                             padding: const EdgeInsets.all(8),
                                             itemCount:  snapshot.data?.docs.length,
