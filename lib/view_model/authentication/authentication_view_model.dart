@@ -24,7 +24,8 @@ class AuthenticationVM {
         'graduation_year': year,
         'email': email,
         'userAuthId': credential.user?.uid,
-        'is_banned': false
+        'is_banned': false,
+        'is_active_account': true
       })
           .then((value) => {
         students.doc(value.id).update({
