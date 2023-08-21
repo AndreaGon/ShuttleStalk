@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:shuttle_stalk/services/local_notifications_service.dart';
 import 'package:shuttle_stalk/view/authentication/login_view.dart';
 import 'package:shuttle_stalk/view/authentication/registration_view.dart';
 import 'package:shuttle_stalk/res/colors.dart';
@@ -48,6 +49,8 @@ void main() async {
     print('Message notification: ${message.notification?.body}');
 
     _messageStreamController.sink.add(message);
+
+    LocalNotificationService.display(message);
   });
   // TODO: Set up background message handler
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
@@ -56,7 +59,20 @@ void main() async {
   runApp(ShuttleStalk());
 }
 
-class ShuttleStalk extends StatelessWidget {
+class ShuttleStalk extends StatefulWidget {
+
+  @override
+  State<ShuttleStalk> createState() => _ShuttleStalkState();
+}
+
+class _ShuttleStalkState extends State<ShuttleStalk> {
+  @override
+  void initState() {
+    super.initState();
+    // Initialise  localnotification
+    LocalNotificationService.initialize();
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -68,5 +84,4 @@ class ShuttleStalk extends StatelessWidget {
       initialRoute: '/login'
     );
   }
-
 }
