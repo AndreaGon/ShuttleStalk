@@ -143,6 +143,9 @@ class _HomeState extends State<Home> {
                                                 routeName: bookingInfo[index]["routeName"],
                                                 departureTime: bookingInfo[index]["time"],
                                                 pickupDropoff: bookingInfo[index]["pickupDropoff"].toUpperCase(),
+                                                sourceLocation: bookingInfo[index]["route"],
+                                                bookingId: bookingInfo[index]["id"],
+                                                bookingDate: bookingInfo[index]["date"],
                                               );
                                             })
                                         );

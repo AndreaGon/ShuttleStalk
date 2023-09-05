@@ -1,13 +1,17 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shuttle_stalk/res/colors.dart';
+import 'package:shuttle_stalk/view/realtime/realtime_view.dart';
 
 class BookingCardLayout extends StatelessWidget {
   final String routeName;
   final String pickupDropoff;
   final String departureTime;
+  final String sourceLocation;
+  final String bookingId;
+  final String bookingDate;
 
-  const BookingCardLayout({Key? key, required this.routeName, required this.departureTime, required this.pickupDropoff}) : super(key: key);
+  const BookingCardLayout({Key? key, required this.routeName, required this.departureTime, required this.pickupDropoff, required this.sourceLocation, required this.bookingId, required this.bookingDate}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +56,14 @@ class BookingCardLayout extends StatelessWidget {
                       primary: skyblue,
                       elevation: 0,
                     ),
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => RealTimeView(sourceLocation: sourceLocation, bookingId: bookingId, bookingDate: bookingDate, bookingTime: departureTime),
+                        ),
+                      );
+                    },
                   ),
                 )
             )

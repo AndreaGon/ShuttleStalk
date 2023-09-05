@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shuttle_stalk/models/bookings.dart';
+import 'package:uuid/uuid.dart';
 
 class BookingVM {
-  CollectionReference shuttles = FirebaseFirestore.instance.collection('shuttles');
+  CollectionReference shuttles = FirebaseFirestore.instance.collection('routes');
   CollectionReference bookingRef = FirebaseFirestore.instance.collection('bookings');
 
   Future getShuttleInfo() async {
@@ -25,15 +26,22 @@ class BookingVM {
     return querySnapshot;
   }
 
+  Future<void> deleteBooking(String id) async {
+    bookingRef.doc(id).delete();
+  }
+
   Future<void> addBooking(Bookings bookings) async {
-    bookingRef.add({
+    var uuid = Uuid();
+    var uuidV4 = uuid.v4();
+    bookingRef.doc(uuidV4).set({
+      "id": uuidV4,
       "routeName": bookings.routeName,
       "pickupDropoff": bookings.pickupDropoff,
       "time": bookings.time,
       "date": bookings.date,
       "route": bookings.route,
       "studentId": bookings.studentId,
-      "shuttleId": bookings.shuttleId
+      "routeId": bookings.routeId
     });
   }
 }

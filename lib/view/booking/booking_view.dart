@@ -5,12 +5,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shuttle_stalk/models/bookings.dart';
+import 'package:shuttle_stalk/models/locations.dart';
 import 'package:shuttle_stalk/res/colors.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shuttle_stalk/view/booking/layout/booking_dropdown_layout.dart';
 import 'package:shuttle_stalk/res/layout/bottom_nav_layout.dart';
 import 'package:shuttle_stalk/view/authentication/login_view.dart';
 import 'package:shuttle_stalk/view_model/authentication/authentication_view_model.dart';
+import 'package:shuttle_stalk/view_model/realtime/realtime_view_model.dart';
 
 import '../../view_model/booking/booking_view_model.dart';
 import '../notification/notification_list_view.dart';
@@ -24,6 +26,7 @@ class Booking extends StatefulWidget {
 class _BookingState extends State<Booking> {
 
   final BookingVM bookingVM = BookingVM();
+  final RealTimeVM realtimeVM = RealTimeVM();
   final AuthenticationVM authVM = AuthenticationVM();
 
   DateTime dateToday = DateTime.now();
@@ -43,8 +46,10 @@ class _BookingState extends State<Booking> {
       date: "",
       route: "",
       studentId: "",
-      shuttleId: ""
+      routeId: ""
   );
+
+  Locations location = Locations(routeId: "", time: "", date: "", shuttleLocation: "", shuttlePlateNo: '', isJourneyStarted: false);
 
   @override
   Widget build(BuildContext context) {
@@ -104,12 +109,12 @@ class _BookingState extends State<Booking> {
                               currentBooking.routeName = shuttleData["routeName"]
 
                             }),
-                            currentBooking.shuttleId = value
+                            currentBooking.routeId = value
 
                           }
                           else{
                             currentBooking.routeName = "",
-                            currentBooking.shuttleId = "",
+                            currentBooking.routeId = "",
                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                               content: Text("Please select a route"),
                             ))
@@ -131,12 +136,15 @@ class _BookingState extends State<Booking> {
 
                             if(value == "pickup"){
                               for(int i = 0; i < shuttleData["pickupTime"].length; i++){
-                                listOfTime.add(shuttleData["pickupTime"][i]);
+                                print(shuttleData);
+                                var currentPickupTime = shuttleData["pickupTime"][i];
+                                listOfTime.add({"display": currentPickupTime, "value": currentPickupTime});
                               }
                             }
                             else{
                               for(int i = 0; i < shuttleData["dropoffTime"].length; i++){
-                                listOfTime.add(shuttleData["dropoffTime"][i]);
+                                var currentDropoffTime = shuttleData["dropoffTime"][i];
+                                listOfTime.add({"display": currentDropoffTime, "value": currentDropoffTime});
                               }
                             }
 
@@ -386,10 +394,24 @@ class _BookingState extends State<Booking> {
                                 }
                                 else{
                                   setState(() {
+                                    location.routeId = currentBooking.routeId;
+                                    location.time = currentBooking.time;
+                                    location.date = currentBooking.date;
+                                    location.shuttleLocation = "";
+                                    location.shuttlePlateNo = "ABC 123";
+                                    location.isJourneyStarted = false;
+
                                     bookingVM.addBooking(currentBooking).then((value) => {
+                                      realtimeVM.isLocationRefExisting(location.routeId, location.date, location.time).then((isExisting) => {
+                                        if(!isExisting){
+                                          realtimeVM.addLocation(location).then((value)=> {
+                                          })
+                                        },
+
+                                      }),
                                       isFirstPartVisible = false,
                                       isSecondPartVisible = false,
-                                      isThirdPartVisible = true
+                                      isThirdPartVisible = true,
                                     });
                                   })
                                 }

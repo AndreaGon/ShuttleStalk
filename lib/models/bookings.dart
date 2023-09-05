@@ -5,7 +5,7 @@ class Bookings {
   String date;
   String route;
   String studentId;
-  String shuttleId;
+  String routeId;
 
   Bookings({
     required this.routeName,
@@ -14,7 +14,7 @@ class Bookings {
     required this.date,
     required this.route,
     required this.studentId,
-    required this.shuttleId,
+    required this.routeId,
   });
 
   factory Bookings.fromJson(Map<String, dynamic> parsedJson){
@@ -25,7 +25,7 @@ class Bookings {
         date: parsedJson['date'].toString(),
         route: parsedJson['route'].toString(),
         studentId: parsedJson['studentId'].toString(),
-        shuttleId: parsedJson['shuttleId'].toString(),
+        routeId: parsedJson['routeId'].toString(),
     );
   }
 
@@ -36,6 +36,6 @@ class Bookings {
     'date': date,
     'route': route,
     'studentId': studentId,
-    'shuttleId': shuttleId,
+    'routeId': routeId,
   };
 }
