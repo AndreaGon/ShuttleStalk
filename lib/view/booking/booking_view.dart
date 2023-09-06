@@ -70,7 +70,7 @@ class _BookingState extends State<Booking> {
           backgroundColor: lightblue
       ),
       body: FutureBuilder(
-        future: bookingVM.getShuttleInfo(),
+        future: bookingVM.getRouteInfo(),
         builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
           List<Map<String, dynamic>> listOfShuttleNames = [{"display": "- Select a route -", "value": ""}];
 
@@ -104,7 +104,7 @@ class _BookingState extends State<Booking> {
                         padding: EdgeInsets.only(bottom: 30, left: 25, right: 20, top: 10), //apply padding to all four sides
                         child: BookingDropdownLayout(items: listOfShuttleNames, onItemSelected: (value) async => {
                           if(value != ""){
-                            await bookingVM.getShuttleInfoId(value).then((value) => {
+                            await bookingVM.getRouteInfoId(value).then((value) => {
                               shuttleData = value.data(),
                               currentBooking.routeName = shuttleData["routeName"]
 

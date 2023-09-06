@@ -3,19 +3,26 @@ import 'package:shuttle_stalk/models/bookings.dart';
 import 'package:uuid/uuid.dart';
 
 class BookingVM {
-  CollectionReference shuttles = FirebaseFirestore.instance.collection('routes');
+  CollectionReference routes = FirebaseFirestore.instance.collection('routes');
+  CollectionReference shuttles = FirebaseFirestore.instance.collection('shuttles');
   CollectionReference bookingRef = FirebaseFirestore.instance.collection('bookings');
 
-  Future getShuttleInfo() async {
-    QuerySnapshot querySnapshot = await shuttles.get();
+  Future getRouteInfo() async {
+    QuerySnapshot querySnapshot = await routes.get();
 
     final allData = querySnapshot.docs.map((doc) => doc.data()).toList();
 
     return allData;
   }
 
-  Future getShuttleInfoId(String id) async{
-    DocumentSnapshot documentSnapshot = await shuttles.doc(id).get();
+  Future getRouteInfoId(String id) async{
+    DocumentSnapshot documentSnapshot = await routes.doc(id).get();
+
+    return documentSnapshot;
+  }
+
+  Future getShuttleFromRoute(String shuttleId) async{
+    DocumentSnapshot documentSnapshot = await shuttles.doc(shuttleId).get();
 
     return documentSnapshot;
   }

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:shuttle_stalk/res/colors.dart';
 import 'package:shuttle_stalk/view/realtime/realtime_view.dart';
 
+import '../../view_model/realtime/realtime_view_model.dart';
+
 class BookingCardLayout extends StatelessWidget {
   final String routeName;
   final String pickupDropoff;
@@ -10,11 +12,15 @@ class BookingCardLayout extends StatelessWidget {
   final String sourceLocation;
   final String bookingId;
   final String bookingDate;
+  final String routeId;
 
-  const BookingCardLayout({Key? key, required this.routeName, required this.departureTime, required this.pickupDropoff, required this.sourceLocation, required this.bookingId, required this.bookingDate}) : super(key: key);
+
+  const BookingCardLayout({Key? key, required this.routeName, required this.departureTime, required this.pickupDropoff, required this.sourceLocation, required this.bookingId, required this.bookingDate, required this.routeId}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final RealTimeVM realTimeVM = RealTimeVM();
+
     return Padding(
       padding: EdgeInsets.only(bottom: 25.0),
       child:  Container(
@@ -42,6 +48,11 @@ class BookingCardLayout extends StatelessWidget {
 
             Padding(
               padding: EdgeInsets.only(top: 15.0, left: 15.0),
+              child: Text("Booking date: " + bookingDate, style: TextStyle(color: darkblue)),
+            ),
+
+            Padding(
+              padding: EdgeInsets.only(top: 15.0, left: 15.0),
               child: Text("Departure time from campus: " + departureTime, style: TextStyle(color: darkblue)),
             ),
 
@@ -57,12 +68,24 @@ class BookingCardLayout extends StatelessWidget {
                       elevation: 0,
                     ),
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => RealTimeView(sourceLocation: sourceLocation, bookingId: bookingId, bookingDate: bookingDate, bookingTime: departureTime),
-                        ),
-                      );
+                      var isJourneyStarted;
+                      realTimeVM.getRealTimeLocationFuture(routeId, bookingDate, departureTime).then((value) => {
+                        isJourneyStarted = value.docs.first.data()["isJourneyStarted"],
+                        if(isJourneyStarted){
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => RealTimeView(sourceLocation: sourceLocation, bookingId: bookingId, bookingDate: bookingDate, bookingTime: departureTime, routeId: routeId),
+                            ),
+                          )
+                        }
+                        else{
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text("Driver has not started the journey yet!"),
+                          ))
+                        }
+
+                      });
                     },
                   ),
                 )

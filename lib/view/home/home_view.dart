@@ -146,6 +146,7 @@ class _HomeState extends State<Home> {
                                                 sourceLocation: bookingInfo[index]["route"],
                                                 bookingId: bookingInfo[index]["id"],
                                                 bookingDate: bookingInfo[index]["date"],
+                                                routeId: bookingInfo[index]["routeId"],
                                               );
                                             })
                                         );

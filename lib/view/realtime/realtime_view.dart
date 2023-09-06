@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:shuttle_stalk/view_model/realtime/realtime_view_model.dart';
 
 import '../../res/colors.dart';
 import '../../view_model/booking/booking_view_model.dart';
@@ -13,8 +16,9 @@ class RealTimeView extends StatefulWidget {
   String bookingId;
   String bookingDate;
   String bookingTime;
+  String routeId;
 
-  RealTimeView({Key? key, required this.sourceLocation, required this.bookingId, required this.bookingDate, required this.bookingTime}) : super(key: key);
+  RealTimeView({Key? key, required this.sourceLocation, required this.bookingId, required this.bookingDate, required this.bookingTime, required this.routeId}) : super(key: key);
 
   @override
   State<RealTimeView> createState() => _RealTimeViewState();
@@ -24,13 +28,242 @@ class _RealTimeViewState extends State<RealTimeView> {
 
   Completer<GoogleMapController> _controller = Completer();
   final BookingVM bookingVM = BookingVM();
+  final RealTimeVM realTimeVM = RealTimeVM();
 
   var waypoint;
   int hoursDifference = 0;
+
+  Set<Marker> driverMarker = Set();
+
+  BitmapDescriptor driverIcon = BitmapDescriptor.defaultMarker;
+  final Set<Polyline>_polyline={};
+
+
   @override
   void initState() {
-    super.initState();
     initDestinationLocation();
+    getShuttleInfoFromRoute();
+    setCustomMarkerIcon();
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    calculateTimeBetweenBooking();
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(""),
+        backgroundColor: lightblue,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            // Add navigation logic here, e.g., to pop the current screen
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
+      body: Stack(
+        children: [
+          StreamBuilder(
+            stream: realTimeVM.getRealTimeLocation(widget.routeId, widget.bookingDate, widget.bookingTime),
+            builder: (context, AsyncSnapshot snapshot) {
+              if(!snapshot.hasData){
+
+                return Center(child: CircularProgressIndicator());
+              }
+
+              GeoPoint driverLocation = snapshot.data["shuttleLocation"];
+
+              final latLng = LatLng(driverLocation.latitude, driverLocation.longitude);
+
+
+
+
+              return FutureBuilder(
+                  builder: (ctx, snapshot){
+                    LatLng source;
+                    print("LOCATION" + snapshot.data.toString());
+                    if(!snapshot.hasData) {
+                      return Center(child: CircularProgressIndicator());
+                    }
+                    else{
+                      source = snapshot.data as LatLng;
+                    }
+                    return GoogleMap(
+                      initialCameraPosition: CameraPosition(
+                        target: source,
+                        zoom: 13.5,
+                      ),
+                      markers: {
+                        Marker(
+                          markerId: MarkerId("destination"),
+                          position: source,
+                        ),
+                        Marker(
+                          markerId: MarkerId("location"), 
+                          position: latLng,
+                          icon: driverIcon,
+                        )
+
+                      },
+                      onMapCreated: (mapController) {
+                        _controller.complete(mapController);
+                      },
+                      // polylines: {
+                      //   Polyline(
+                      //     polylineId: const PolylineId("route"),
+                      //     points: [latLng, source],
+                      //     color: const Color(0xFF7B61FF),
+                      //     width: 6,
+                      //   ),
+                      // },
+                    );
+                  },
+
+                  future: initDestinationLocation()
+              );
+            }
+          ),
+
+          DraggableScrollableSheet(
+            initialChildSize: 0.2,
+            minChildSize: 0.2,
+            maxChildSize: 0.8,
+            builder: (BuildContext context, ScrollController scrollController) {
+              return FutureBuilder(
+                  builder: (ctx, snapshot) {
+                    var shuttle;
+                    print("SHUTTLE: " + snapshot.data.toString());
+                    if(!snapshot.hasData) {
+                      return Center(child: CircularProgressIndicator());
+                    }
+                    else{
+                      shuttle = snapshot.data;
+                    }
+
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.2),
+                            spreadRadius: 1,
+                            blurRadius: 7,
+                            offset: Offset(0, 3), // changes position of shadow
+                          ),
+                        ],
+                        // border: Border.all(color: Colors.blue, width: 2),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(50),
+                          topRight: Radius.circular(50),
+                        ),
+
+                      ),
+                      child: Scrollbar(
+                        child: ListView(
+                          controller: scrollController,
+                          children: [
+                            Padding(
+                                padding: EdgeInsets.only(left: 25, right: 20, top: 50),
+                                child: Container(
+                                  width: MediaQuery.of(context).size.width,
+                                  height: 50.0,
+                                  child: Text("Shuttle Plate No: ${shuttle["plateNo"]}", style: TextStyle(color: darkblue, fontSize: 20.0, fontWeight: FontWeight.bold)),
+                                )
+                            ),
+                            Padding(
+                                padding: EdgeInsets.only(left: 25, right: 20),
+                                child: Container(
+                                  width: MediaQuery.of(context).size.width,
+                                  height: 50.0,
+                                  child: Text("ETA here ", style: TextStyle(color: darkblue, fontSize: 20.0, fontWeight: FontWeight.bold)),
+                                )
+                            ),
+                            Padding(
+                                padding: EdgeInsets.only(bottom: 5, left: 25, right: 20, top: 30),
+                                child: Container(
+                                  width: MediaQuery.of(context).size.width,
+                                  height: 50.0,
+                                  child: ElevatedButton(
+                                    child: Text("Mark Attendance", style: TextStyle(color: darkblue),),
+                                    style: ElevatedButton.styleFrom(
+                                      primary: skyblue,
+                                      elevation: 0,
+                                    ),
+                                    onPressed: () {
+                                    },
+                                  ),
+                                )
+                            ),
+                            Padding(
+                                padding: EdgeInsets.only(bottom: 5, left: 25, right: 20, top: 30),
+                                child: Container(
+                                  width: MediaQuery.of(context).size.width,
+                                  height: 50.0,
+                                  child: ElevatedButton(
+                                    child: Text("Cancel Booking", style: TextStyle(color: white),),
+                                    style: ElevatedButton.styleFrom(
+                                      primary: red,
+                                      elevation: 0,
+                                    ),
+                                    onPressed: () {
+                                      if(hoursDifference > 2){
+                                        showDialog<String>(
+                                          context: context,
+                                          builder: (BuildContext context) => AlertDialog(
+                                            title: const Text('Are you sure?'),
+                                            content: const Text("This will cancel your shuttle booking. There will be no penalty for the cancellation"),
+                                            actions: <Widget>[
+                                              TextButton(
+                                                onPressed: () => Navigator.pop(context, 'Cancel'),
+                                                child: const Text('Cancel'),
+                                              ),
+                                              TextButton(
+                                                onPressed: () => {
+                                                  Navigator.of(context).pop(),
+                                                  bookingVM.deleteBooking(widget.bookingId).then((value) => {
+                                                    Navigator.of(context).pop(),
+                                                  })
+                                                },
+                                                child: const Text("Yes, I'm sure"),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }
+                                      else{
+                                        showDialog<String>(
+                                          context: context,
+                                          builder: (BuildContext context) => AlertDialog(
+                                            title: const Text('Notice'),
+                                            content: const Text("Cancellation can only be done 2 hours before your booking!"),
+                                            actions: <Widget>[
+                                              TextButton(
+                                                onPressed: () => Navigator.pop(context, 'Okay'),
+                                                child: const Text('Okay'),
+                                              )
+                                            ],
+                                          ),
+                                        );
+                                      }
+
+                                    },
+                                  ),
+                                )
+                            )
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+
+                  future: getShuttleInfoFromRoute()
+              );
+            },
+          )
+        ],
+      ),
+    );
   }
 
   Future<LatLng> initDestinationLocation() async {
@@ -55,161 +288,26 @@ class _RealTimeViewState extends State<RealTimeView> {
     print("DATETIME: " + hoursDifference.toString());
   }
 
+  Future getShuttleInfoFromRoute() async{
+    String shuttleId;
+    var shuttleData = {};
+    await bookingVM.getRouteInfoId(widget.routeId).then((value) async => {
+      shuttleId = value.data()["shuttleId"],
+      await bookingVM.getShuttleFromRoute(shuttleId).then((value) => {
+        shuttleData = value.data()
+      })
+    });
 
-  @override
-  Widget build(BuildContext context) {
-    calculateTimeBetweenBooking();
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(""),
-        backgroundColor: lightblue,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () {
-            // Add navigation logic here, e.g., to pop the current screen
-            Navigator.of(context).pop();
-          },
-        ),
-      ),
-      body: Stack(
-        children: [
-          FutureBuilder(
-              builder: (ctx, snapshot){
-                var source;
-                print("LOCATION" + snapshot.data.toString());
-                if(!snapshot.hasData) {
-                  return Center(child: CircularProgressIndicator());
-                }
-                else{
-                  source = snapshot.data;
-                }
-                return GoogleMap(
-                  initialCameraPosition: CameraPosition(
-                    target: source,
-                    zoom: 13.5,
-                  ),
-                  markers: {
-                    Marker(
-                      markerId: MarkerId("destination"),
-                      position: source,
-                    ),
+    return shuttleData;
+  }
 
-                  },
-                  onMapCreated: (mapController) {
-                    _controller.complete(mapController);
-                  },
-                );
-              },
-
-              future: initDestinationLocation()
-          ),
-          DraggableScrollableSheet(
-            initialChildSize: 0.2,
-            minChildSize: 0.2,
-            maxChildSize: 0.8,
-            builder: (BuildContext context, ScrollController scrollController) {
-              return Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.2),
-                          spreadRadius: 1,
-                          blurRadius: 7,
-                          offset: Offset(0, 3), // changes position of shadow
-                        ),
-                      ],
-                      // border: Border.all(color: Colors.blue, width: 2),
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(50),
-                        topRight: Radius.circular(50),
-                      ),
-
-                    ),
-                    child: Scrollbar(
-                      child: ListView(
-                        controller: scrollController,
-                        children: [
-                          Padding(
-                              padding: EdgeInsets.only(left: 25, right: 20, top: 50),
-                              child: Container(
-                                width: MediaQuery.of(context).size.width,
-                                height: 50.0,
-                                child: Text("Shuttle Plate No here ", style: TextStyle(color: darkblue, fontSize: 20.0, fontWeight: FontWeight.bold)),
-                              )
-                          ),
-                          Padding(
-                              padding: EdgeInsets.only(left: 25, right: 20),
-                              child: Container(
-                                width: MediaQuery.of(context).size.width,
-                                height: 50.0,
-                                child: Text("ETA here ", style: TextStyle(color: darkblue, fontSize: 20.0, fontWeight: FontWeight.bold)),
-                              )
-                          ),
-                          Padding(
-                              padding: EdgeInsets.only(bottom: 5, left: 25, right: 20, top: 30),
-                              child: Container(
-                                width: MediaQuery.of(context).size.width,
-                                height: 50.0,
-                                child: ElevatedButton(
-                                  child: Text("Cancel Booking", style: TextStyle(color: white),),
-                                  style: ElevatedButton.styleFrom(
-                                    primary: red,
-                                    elevation: 0,
-                                  ),
-                                  onPressed: () {
-                                    if(hoursDifference > 2){
-                                      showDialog<String>(
-                                        context: context,
-                                        builder: (BuildContext context) => AlertDialog(
-                                          title: const Text('Are you sure?'),
-                                          content: const Text("This will cancel your shuttle booking. There will be no penalty for the cancellation"),
-                                          actions: <Widget>[
-                                            TextButton(
-                                              onPressed: () => Navigator.pop(context, 'Cancel'),
-                                              child: const Text('Cancel'),
-                                            ),
-                                            TextButton(
-                                              onPressed: () => {
-                                                Navigator.of(context).pop(),
-                                                bookingVM.deleteBooking(widget.bookingId).then((value) => {
-                                                  Navigator.of(context).pop(),
-                                                })
-                                              },
-                                              child: const Text("Yes, I'm sure"),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    }
-                                    else{
-                                      showDialog<String>(
-                                        context: context,
-                                        builder: (BuildContext context) => AlertDialog(
-                                          title: const Text('Notice'),
-                                          content: const Text("Cancellation can only be done 2 hours before your booking!"),
-                                          actions: <Widget>[
-                                            TextButton(
-                                              onPressed: () => Navigator.pop(context, 'Okay'),
-                                              child: const Text('Okay'),
-                                            )
-                                          ],
-                                        ),
-                                      );
-                                    }
-
-                                  },
-                                ),
-                              )
-                          )
-                        ],
-                      ),
-                    ),
-              );
-            },
-          )
-        ],
-      ),
+  void setCustomMarkerIcon() async{
+    await BitmapDescriptor.fromAssetImage(
+        ImageConfiguration.empty, "lib/res/assets/shuttle.png")
+        .then(
+          (icon) {
+        driverIcon = icon;
+      },
     );
   }
 }

@@ -30,12 +30,44 @@ class RealTimeVM {
     }
   }
 
+  Future getRealTimeLocationFuture(String routeId, String date, String time) async{
+    QuerySnapshot querySnapshot = await locationRef
+        .where('routeId', isEqualTo: routeId) // Replace with your field and value
+        .where('date', isEqualTo: date)
+        .where('time', isEqualTo: time)
+        .limit(1) // Limit the result to one document
+        .get();
+
+    return querySnapshot;
+  }
+
+  Stream getRealTimeLocation(String routeId, String date, String time){
+    Stream<QuerySnapshot> querySnapshot = locationRef
+        .where('routeId', isEqualTo: routeId) // Replace with your field and value
+        .where('date', isEqualTo: date)
+        .where('time', isEqualTo: time) // Limit the result to one document
+        .snapshots();
+    
+    return querySnapshot.map(
+      (QuerySnapshot snapshot) {
+          // Convert each document in the query snapshot to a Map
+          List<Map<String, dynamic>> documents = [];
+          for (QueryDocumentSnapshot doc in snapshot.docs) {
+            documents.add(doc.data() as Map<String, dynamic>);
+          }
+
+          return documents[0];
+        },
+      );
+  }
+
   Future<void> addLocation(Locations locations) async {
     locationRef.add({
       "routeId": locations.routeId,
       "time": locations.time,
       "date": locations.date,
-      "shuttleLocation": locations.shuttleLocation
+      "shuttleLocation": null,
+      "isJourneyStarted": locations.isJourneyStarted
     });
   }
 }
