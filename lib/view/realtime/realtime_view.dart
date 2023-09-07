@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:dio/dio.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shuttle_stalk/view_model/realtime/realtime_view_model.dart';
 
@@ -36,8 +38,10 @@ class _RealTimeViewState extends State<RealTimeView> {
   Set<Marker> driverMarker = Set();
 
   BitmapDescriptor driverIcon = BitmapDescriptor.defaultMarker;
-  final Set<Polyline>_polyline={};
-
+  PolylinePoints polylinePoints = PolylinePoints();
+  Map<PolylineId, Polyline> polylines = {};
+  GeoPoint driverLocation = GeoPoint(0.0, 0.0);
+  LatLng source = LatLng(0.0, 0.0);
 
   @override
   void initState() {
@@ -72,22 +76,19 @@ class _RealTimeViewState extends State<RealTimeView> {
                 return Center(child: CircularProgressIndicator());
               }
 
-              GeoPoint driverLocation = snapshot.data["shuttleLocation"];
+              driverLocation = snapshot.data["shuttleLocation"];
 
               final latLng = LatLng(driverLocation.latitude, driverLocation.longitude);
 
-
-
-
               return FutureBuilder(
                   builder: (ctx, snapshot){
-                    LatLng source;
-                    print("LOCATION" + snapshot.data.toString());
                     if(!snapshot.hasData) {
                       return Center(child: CircularProgressIndicator());
                     }
                     else{
                       source = snapshot.data as LatLng;
+                      getPolyline(driverLocation.latitude, driverLocation.longitude, source.latitude, source.longitude);
+
                     }
                     return GoogleMap(
                       initialCameraPosition: CameraPosition(
@@ -109,14 +110,7 @@ class _RealTimeViewState extends State<RealTimeView> {
                       onMapCreated: (mapController) {
                         _controller.complete(mapController);
                       },
-                      // polylines: {
-                      //   Polyline(
-                      //     polylineId: const PolylineId("route"),
-                      //     points: [latLng, source],
-                      //     color: const Color(0xFF7B61FF),
-                      //     width: 6,
-                      //   ),
-                      // },
+                      polylines: Set<Polyline>.of(polylines.values),
                     );
                   },
 
@@ -131,14 +125,16 @@ class _RealTimeViewState extends State<RealTimeView> {
             maxChildSize: 0.8,
             builder: (BuildContext context, ScrollController scrollController) {
               return FutureBuilder(
-                  builder: (ctx, snapshot) {
+                  builder: (ctx, AsyncSnapshot<List<dynamic>> snapshot) {
                     var shuttle;
-                    print("SHUTTLE: " + snapshot.data.toString());
+                    var estimatedTimeArrival;
                     if(!snapshot.hasData) {
                       return Center(child: CircularProgressIndicator());
                     }
                     else{
-                      shuttle = snapshot.data;
+                      shuttle = snapshot.data?[0];
+                      estimatedTimeArrival = snapshot.data?[1];
+                      print("SHUTTLE: " + estimatedTimeArrival.toString());
                     }
 
                     return Container(
@@ -176,7 +172,7 @@ class _RealTimeViewState extends State<RealTimeView> {
                                 child: Container(
                                   width: MediaQuery.of(context).size.width,
                                   height: 50.0,
-                                  child: Text("ETA here ", style: TextStyle(color: darkblue, fontSize: 20.0, fontWeight: FontWeight.bold)),
+                                  child: (estimatedTimeArrival == null) ? Text("ETA: No ETA at this time", style: TextStyle(color: darkblue, fontSize: 20.0, fontWeight: FontWeight.bold)): Text("ETA: " + estimatedTimeArrival.toString(), style: TextStyle(color: darkblue, fontSize: 20.0, fontWeight: FontWeight.bold)),
                                 )
                             ),
                             Padding(
@@ -257,7 +253,10 @@ class _RealTimeViewState extends State<RealTimeView> {
                     );
                   },
 
-                  future: getShuttleInfoFromRoute()
+                  future: Future.wait([
+                    getShuttleInfoFromRoute(),
+                    getDistanceMatrix(driverLocation.latitude, driverLocation.longitude, source.latitude, source.longitude)
+                  ])
               );
             },
           )
@@ -285,7 +284,6 @@ class _RealTimeViewState extends State<RealTimeView> {
 
     //hoursDifference = bookingDateTime.difference(dateTimeNow).inHours;
     hoursDifference = bookingDateTime.difference(dateTimeNow).inHours;
-    print("DATETIME: " + hoursDifference.toString());
   }
 
   Future getShuttleInfoFromRoute() async{
@@ -310,4 +308,51 @@ class _RealTimeViewState extends State<RealTimeView> {
       },
     );
   }
+
+  addPolyLine(List<LatLng> polylineCoordinates) {
+    polylines = {};
+    PolylineId id = PolylineId("poly");
+    Polyline polyline = Polyline(
+      polylineId: id,
+      points: polylineCoordinates,
+      color: lightblue,
+      width: 8,
+    );
+
+    polylines[id] = polyline;
+    if(mounted){
+      setState(() {});
+    }
+  }
+
+  void getPolyline(sourceLat, sourceLong, destLat, destLong) async {
+    List<LatLng> polylineCoordinates = [];
+    polylineCoordinates.clear();
+    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+      "AIzaSyBPOUA1S51D3-RZnahp5ZeXEbmIs4iMmmI",
+      PointLatLng(sourceLat, sourceLong),
+      PointLatLng(destLat, destLong),
+      travelMode: TravelMode.driving,
+    );
+    if (result.points.isNotEmpty) {
+      result.points.forEach((PointLatLng point) {
+        polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+      });
+    } else {
+      print(result.errorMessage);
+    }
+    addPolyLine(polylineCoordinates);
+  }
+
+  Future<dynamic> getDistanceMatrix(driverLat, driverLong, destLat, destLong) async {
+    try {
+      var response = await Dio().get('https://maps.googleapis.com/maps/api/distancematrix/json?origins=${destLat},${destLong}&destinations=${driverLat},${driverLong}&key=AIzaSyBPOUA1S51D3-RZnahp5ZeXEbmIs4iMmmI');
+      return await response.data["rows"][0]["elements"][0]["duration"]["text"];
+    } catch (e) {
+      print(e);
+    }
+  }
+
+
+
 }
