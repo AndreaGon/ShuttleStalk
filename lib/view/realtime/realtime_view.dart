@@ -19,8 +19,9 @@ class RealTimeView extends StatefulWidget {
   String bookingDate;
   String bookingTime;
   String routeId;
+  Map<String, dynamic> shuttleData;
 
-  RealTimeView({Key? key, required this.sourceLocation, required this.bookingId, required this.bookingDate, required this.bookingTime, required this.routeId}) : super(key: key);
+  RealTimeView({Key? key, required this.sourceLocation, required this.bookingId, required this.bookingDate, required this.bookingTime, required this.routeId, required this.shuttleData}) : super(key: key);
 
   @override
   State<RealTimeView> createState() => _RealTimeViewState();
@@ -48,7 +49,14 @@ class _RealTimeViewState extends State<RealTimeView> {
     initDestinationLocation();
     getShuttleInfoFromRoute();
     setCustomMarkerIcon();
+    print("SHUTTLE: " + widget.shuttleData.toString());
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    // Cancel or clean up ongoing tasks (e.g., cancel HTTP requests, close streams).
+    super.dispose();
   }
 
   @override
@@ -125,16 +133,14 @@ class _RealTimeViewState extends State<RealTimeView> {
             maxChildSize: 0.8,
             builder: (BuildContext context, ScrollController scrollController) {
               return FutureBuilder(
-                  builder: (ctx, AsyncSnapshot<List<dynamic>> snapshot) {
-                    var shuttle;
+                  builder: (ctx, AsyncSnapshot snapshot) {
                     var estimatedTimeArrival;
                     if(!snapshot.hasData) {
                       return Center(child: CircularProgressIndicator());
                     }
                     else{
-                      shuttle = snapshot.data?[0];
-                      estimatedTimeArrival = snapshot.data?[1];
-                      print("SHUTTLE: " + estimatedTimeArrival.toString());
+                      //shuttle = snapshot.data?[0];
+                      estimatedTimeArrival = snapshot.data["rows"][0]["elements"][0]["duration"];
                     }
 
                     return Container(
@@ -164,7 +170,7 @@ class _RealTimeViewState extends State<RealTimeView> {
                                 child: Container(
                                   width: MediaQuery.of(context).size.width,
                                   height: 50.0,
-                                  child: Text("Shuttle Plate No: ${shuttle["plateNo"]}", style: TextStyle(color: darkblue, fontSize: 20.0, fontWeight: FontWeight.bold)),
+                                  child: Text("Shuttle Plate No: ${widget.shuttleData["plateNo"]}", style: TextStyle(color: darkblue, fontSize: 20.0, fontWeight: FontWeight.bold)),
                                 )
                             ),
                             Padding(
@@ -172,7 +178,8 @@ class _RealTimeViewState extends State<RealTimeView> {
                                 child: Container(
                                   width: MediaQuery.of(context).size.width,
                                   height: 50.0,
-                                  child: (estimatedTimeArrival == null) ? Text("ETA: No ETA at this time", style: TextStyle(color: darkblue, fontSize: 20.0, fontWeight: FontWeight.bold)): Text("ETA: " + estimatedTimeArrival.toString(), style: TextStyle(color: darkblue, fontSize: 20.0, fontWeight: FontWeight.bold)),
+                                  child:
+                                  (estimatedTimeArrival == null) ? Text("ETA: No ETA at this time", style: TextStyle(color: darkblue, fontSize: 20.0, fontWeight: FontWeight.bold)): Text("ETA: " + (estimatedTimeArrival["text"]).toString(), style: TextStyle(color: darkblue, fontSize: 20.0, fontWeight: FontWeight.bold)),
                                 )
                             ),
                             Padding(
@@ -253,10 +260,7 @@ class _RealTimeViewState extends State<RealTimeView> {
                     );
                   },
 
-                  future: Future.wait([
-                    getShuttleInfoFromRoute(),
-                    getDistanceMatrix(driverLocation.latitude, driverLocation.longitude, source.latitude, source.longitude)
-                  ])
+                  future: getDistanceMatrix()
               );
             },
           )
@@ -282,7 +286,6 @@ class _RealTimeViewState extends State<RealTimeView> {
     DateTime dateTimeNow = DateTime.now();
     DateTime bookingDateTime = DateTime.parse("${widget.bookingDate} ${widget.bookingTime}:00");
 
-    //hoursDifference = bookingDateTime.difference(dateTimeNow).inHours;
     hoursDifference = bookingDateTime.difference(dateTimeNow).inHours;
   }
 
@@ -344,15 +347,24 @@ class _RealTimeViewState extends State<RealTimeView> {
     addPolyLine(polylineCoordinates);
   }
 
-  Future<dynamic> getDistanceMatrix(driverLat, driverLong, destLat, destLong) async {
+  Future getDistanceMatrix() async {
+    var estimatedArrivalTime;
+
     try {
-      var response = await Dio().get('https://maps.googleapis.com/maps/api/distancematrix/json?origins=${destLat},${destLong}&destinations=${driverLat},${driverLong}&key=AIzaSyBPOUA1S51D3-RZnahp5ZeXEbmIs4iMmmI');
-      return await response.data["rows"][0]["elements"][0]["duration"]["text"];
+      var response = await Dio().get('https://maps.googleapis.com/maps/api/distancematrix/json?origins=${source.latitude},${source.longitude}&destinations=${driverLocation.latitude},${driverLocation.longitude}&key=AIzaSyBPOUA1S51D3-RZnahp5ZeXEbmIs4iMmmI');
+      //return await (response.data["rows"][0]["elements"][0]["duration"]["text"]).toString();
+      estimatedArrivalTime = response.data;
+      print(estimatedArrivalTime);
+
+      if(estimatedArrivalTime["rows"][0]["elements"][0]["status"] == "ZERO_RESULT"){
+        getDistanceMatrix();
+      }
+      else{
+        return estimatedArrivalTime;
+      }
     } catch (e) {
       print(e);
     }
   }
-
-
 
 }
