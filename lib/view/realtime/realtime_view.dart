@@ -34,6 +34,7 @@ class _RealTimeViewState extends State<RealTimeView> {
   final RealTimeVM realTimeVM = RealTimeVM();
 
   var waypoint;
+  var distanceTime;
   int hoursDifference = 0;
 
   Set<Marker> driverMarker = Set();
@@ -47,9 +48,7 @@ class _RealTimeViewState extends State<RealTimeView> {
   @override
   void initState() {
     initDestinationLocation();
-    getShuttleInfoFromRoute();
     setCustomMarkerIcon();
-    print("SHUTTLE: " + widget.shuttleData.toString());
     super.initState();
   }
 
@@ -109,7 +108,7 @@ class _RealTimeViewState extends State<RealTimeView> {
                           position: source,
                         ),
                         Marker(
-                          markerId: MarkerId("location"), 
+                          markerId: MarkerId("location"),
                           position: latLng,
                           icon: driverIcon,
                         )
@@ -135,12 +134,9 @@ class _RealTimeViewState extends State<RealTimeView> {
               return FutureBuilder(
                   builder: (ctx, AsyncSnapshot snapshot) {
                     var estimatedTimeArrival;
-                    if(!snapshot.hasData) {
-                      return Center(child: CircularProgressIndicator());
-                    }
-                    else{
-                      //shuttle = snapshot.data?[0];
-                      estimatedTimeArrival = snapshot.data["rows"][0]["elements"][0]["duration"];
+
+                    if(distanceTime != null){
+                      estimatedTimeArrival = distanceTime["rows"][0]["elements"][0]["duration"];
                     }
 
                     return Container(
@@ -289,18 +285,6 @@ class _RealTimeViewState extends State<RealTimeView> {
     hoursDifference = bookingDateTime.difference(dateTimeNow).inHours;
   }
 
-  Future getShuttleInfoFromRoute() async{
-    String shuttleId;
-    var shuttleData = {};
-    await bookingVM.getRouteInfoId(widget.routeId).then((value) async => {
-      shuttleId = value.data()["shuttleId"],
-      await bookingVM.getShuttleFromRoute(shuttleId).then((value) => {
-        shuttleData = value.data()
-      })
-    });
-
-    return shuttleData;
-  }
 
   void setCustomMarkerIcon() async{
     await BitmapDescriptor.fromAssetImage(
@@ -348,19 +332,18 @@ class _RealTimeViewState extends State<RealTimeView> {
   }
 
   Future getDistanceMatrix() async {
-    var estimatedArrivalTime;
-
     try {
       var response = await Dio().get('https://maps.googleapis.com/maps/api/distancematrix/json?origins=${source.latitude},${source.longitude}&destinations=${driverLocation.latitude},${driverLocation.longitude}&key=AIzaSyBPOUA1S51D3-RZnahp5ZeXEbmIs4iMmmI');
       //return await (response.data["rows"][0]["elements"][0]["duration"]["text"]).toString();
-      estimatedArrivalTime = response.data;
-      print(estimatedArrivalTime);
+      distanceTime = response.data;
 
-      if(estimatedArrivalTime["rows"][0]["elements"][0]["status"] == "ZERO_RESULT"){
+      if(distanceTime["rows"][0]["elements"][0]["status"] == "ZERO_RESULT"){
         getDistanceMatrix();
       }
       else{
-        return estimatedArrivalTime;
+        if(mounted){
+          setState(() {});
+        }
       }
     } catch (e) {
       print(e);
