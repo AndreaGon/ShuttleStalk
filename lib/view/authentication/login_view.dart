@@ -64,10 +64,8 @@ class Login extends StatelessWidget {
                       var studentInfo;
                       authVM.getCurrentUserWithEmail(email.text.trim()).then((value) => {
                         studentInfo = value.docs.map((DocumentSnapshot doc) => doc.data() as Map<String, dynamic>).toList(),
-                        if(studentInfo.length == 0){
-                          authVM.loginUser(context, email.text.trim(), password.text.trim())
-                        }
-                        else{
+                        print("IS EXISTING" + studentInfo.toString()),
+                        if(studentInfo.length != 0){
                           if(studentInfo[0]["is_active_account"]){
                             authVM.loginUser(context, email.text.trim(), password.text.trim())
                           }
@@ -76,6 +74,11 @@ class Login extends StatelessWidget {
                               content: Text("Your account is deactivated. Please see the AFM office"),
                             ))
                           }
+                        }
+                        else{
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text("User doesn't exist!"),
+                          ))
                         }
                       });
                     }

@@ -49,6 +49,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '699128640565',
     projectId: 'shuttle-stalk',
     authDomain: 'shuttle-stalk.firebaseapp.com',
+    databaseURL: 'https://shuttle-stalk-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'shuttle-stalk.appspot.com',
     measurementId: 'G-5JRLPYR81G',
   );
@@ -58,6 +59,7 @@ class DefaultFirebaseOptions {
     appId: '1:699128640565:android:c08feaedc16b4527fa2d7c',
     messagingSenderId: '699128640565',
     projectId: 'shuttle-stalk',
+    databaseURL: 'https://shuttle-stalk-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'shuttle-stalk.appspot.com',
   );
 
@@ -66,6 +68,7 @@ class DefaultFirebaseOptions {
     appId: '1:699128640565:ios:6fcb3b73e426f7f4fa2d7c',
     messagingSenderId: '699128640565',
     projectId: 'shuttle-stalk',
+    databaseURL: 'https://shuttle-stalk-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'shuttle-stalk.appspot.com',
     iosClientId: '699128640565-9dqiur509u789cvk9q1chgu09gf4k69r.apps.googleusercontent.com',
     iosBundleId: 'com.shuttlestalk.shuttleStalk',
@@ -76,6 +79,7 @@ class DefaultFirebaseOptions {
     appId: '1:699128640565:ios:6fcb3b73e426f7f4fa2d7c',
     messagingSenderId: '699128640565',
     projectId: 'shuttle-stalk',
+    databaseURL: 'https://shuttle-stalk-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'shuttle-stalk.appspot.com',
     iosClientId: '699128640565-9dqiur509u789cvk9q1chgu09gf4k69r.apps.googleusercontent.com',
     iosBundleId: 'com.shuttlestalk.shuttleStalk',

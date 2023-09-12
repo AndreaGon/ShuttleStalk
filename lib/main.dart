@@ -8,6 +8,8 @@ import 'package:shuttle_stalk/view/authentication/login_view.dart';
 import 'package:shuttle_stalk/view/authentication/registration_view.dart';
 import 'package:shuttle_stalk/res/colors.dart';
 import 'package:shuttle_stalk/utils/router.dart';
+import 'package:shuttle_stalk/view/main_view.dart';
+import 'package:shuttle_stalk/view_model/authentication/authentication_view_model.dart';
 
 import 'firebase_options.dart';
 import 'package:rxdart/rxdart.dart';
@@ -75,13 +77,23 @@ class _ShuttleStalkState extends State<ShuttleStalk> {
 
   @override
   Widget build(BuildContext context) {
+
+    AuthenticationVM authVM = AuthenticationVM();
+
     return MaterialApp(
       title: 'Shuttle Stalk',
-      onGenerateRoute: MainRouter.generateRoute,
-      theme: ThemeData(
-        primaryColor: lightblue
+      home: FutureBuilder<bool>(
+          future: authVM.isLoggedIn(context),
+          builder: (context, snapshot) {
+            if (snapshot.hasData && snapshot.data == true) {
+              // User is logged in, display the main screen with the bottom navigation.
+              return MainView();
+            } else {
+              // User is not logged in, display the login or registration screen.
+              return Login();
+            }
+          }
       ),
-      initialRoute: '/login'
     );
   }
 }

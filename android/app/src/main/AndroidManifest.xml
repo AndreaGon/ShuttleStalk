@@ -1,11 +1,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.shuttlestalk.shuttle_stalk">
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
    <application
         android:label="shuttle_stalk"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
        <meta-data android:name="com.google.android.geo.API_KEY"
-           android:value="AIzaSyBPOUA1S51D3-RZnahp5ZeXEbmIs4iMmmI"/>
+           android:value="AIzaSyAPxN6UrJeSCo6uDciO5EK--QCxo2cvros"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"

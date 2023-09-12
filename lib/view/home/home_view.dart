@@ -18,19 +18,6 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   AuthenticationVM authVM = AuthenticationVM();
   BookingVM bookingVM = BookingVM();
-
-  // var currentUser;
-  //
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   authVM.getCurrentUser(FirebaseAuth.instance.currentUser!.uid).then((value) => {
-  //     setState((){
-  //       currentUser = value.docs.map((DocumentSnapshot doc) => doc.data() as Map<String, dynamic>).toList();
-  //       print(currentUser);
-  //     })
-  //   });
-  // }
   
   @override
   Widget build(BuildContext context) {
@@ -141,7 +128,7 @@ class _HomeState extends State<Home> {
                                               bookingInfo = snapshot.data?.docs.map((DocumentSnapshot doc) => doc.data() as Map<String, dynamic>).toList();
                                               return BookingCardLayout(
                                                 routeName: bookingInfo[index]["routeName"],
-                                                departureTime: bookingInfo[index]["time"],
+                                                bookingTime: bookingInfo[index]["time"],
                                                 pickupDropoff: bookingInfo[index]["pickupDropoff"].toUpperCase(),
                                                 sourceLocation: bookingInfo[index]["route"],
                                                 bookingId: bookingInfo[index]["id"],

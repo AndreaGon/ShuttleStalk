@@ -51,6 +51,9 @@ dependencies:
   image: ^4.0.17
   flutter_polyline_points: ^2.0.0
   dio: ^5.3.2
+  shared_preferences: ^2.2.1
+  easy_geofencing: ^0.2.0
+  geolocator: ^7.7.1
 
 dev_dependencies:
   flutter_test:

@@ -29,7 +29,11 @@ class BookingVM {
 
 
   Stream getAllBookingsStudentId(String studentId){
-    Stream<QuerySnapshot> querySnapshot=  bookingRef.where('studentId', isEqualTo: studentId).snapshots();
+    Stream<QuerySnapshot> querySnapshot=  bookingRef
+        .where('studentId', isEqualTo: studentId)
+        .where('attendance_marked', isEqualTo: false)
+        .where('is_invalid', isEqualTo: false)
+        .snapshots();
     return querySnapshot;
   }
 
@@ -48,7 +52,27 @@ class BookingVM {
       "date": bookings.date,
       "route": bookings.route,
       "studentId": bookings.studentId,
-      "routeId": bookings.routeId
+      "routeId": bookings.routeId,
+      "attendance_marked": false,
+      "is_invalid": false
     });
   }
+
+  Future<void> markAttendance(String bookingId) async {
+    bookingRef.doc(bookingId).update({
+      "attendance_marked": true
+    });
+  }
+
+  Future<int> getNumberOfBooking(String routeId, String date, String time) async{
+    QuerySnapshot querySnapshotBooking = await bookingRef
+        .where('routeId', isEqualTo: routeId) // Replace with your field and value
+        .where('date', isEqualTo: date)
+        .where('time', isEqualTo: time) // Limit the result to one document
+        .get();
+
+    // Check if there are any matching documents
+    return querySnapshotBooking.size;
+  }
+
 }

@@ -378,6 +378,8 @@ class _BookingState extends State<Booking> {
                           ),
                           onPressed: () {
                             var studentInfo;
+                            var shuttleId;
+                            var shuttleInfo;
                             authVM.getCurrentUser(FirebaseAuth.instance.currentUser!.uid).then((value) => {
                               studentInfo = value.docs.map((DocumentSnapshot doc) => doc.data() as Map<String, dynamic>).toList(),
                               if(studentInfo[0]["is_banned"]){
@@ -393,27 +395,44 @@ class _BookingState extends State<Booking> {
                                   ))
                                 }
                                 else{
-                                  setState(() {
-                                    location.routeId = currentBooking.routeId;
-                                    location.time = currentBooking.time;
-                                    location.date = currentBooking.date;
-                                    location.shuttleLocation = "";
-                                    location.shuttlePlateNo = "ABC 123";
-                                    location.isJourneyStarted = false;
+                                  location.routeId = currentBooking.routeId,
+                                  location.time = currentBooking.time,
+                                  location.date = currentBooking.date,
+                                  location.shuttleLocation = "",
+                                  location.shuttlePlateNo = "",
+                                  location.isJourneyStarted = false,
 
-                                    bookingVM.addBooking(currentBooking).then((value) => {
-                                      realtimeVM.isLocationRefExisting(location.routeId, location.date, location.time).then((isExisting) => {
-                                        if(!isExisting){
-                                          realtimeVM.addLocation(location).then((value)=> {
+
+                                  bookingVM.getRouteInfoId(currentBooking.routeId).then((route) => {
+                                    shuttleId = route.data()["shuttleId"],
+                                    bookingVM.getShuttleFromRoute(shuttleId).then((shuttle) => {
+                                      shuttleInfo = shuttle.data(),
+                                      bookingVM.getNumberOfBooking(currentBooking.routeId, currentBooking.date, currentBooking.time).then((bookingNumber) => {
+                                        if(bookingNumber < shuttleInfo["seats"]){
+                                          setState(() {
+                                            location.shuttlePlateNo = shuttleInfo["plateNo"];
+                                            isFirstPartVisible = false;
+                                            isSecondPartVisible = false;
+                                            isThirdPartVisible = true;
+                                            bookingVM.addBooking(currentBooking).then((value) => {
+                                              realtimeVM.isLocationRefExisting(location.routeId, location.date, location.time).then((isExisting) => {
+                                                if(!isExisting){
+                                                  realtimeVM.addLocation(location).then((value)=> {
+                                                  })
+                                                },
+                                              }),
+                                            });
                                           })
-                                        },
 
+                                        }
+                                        else{
+                                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                            content: Text("Booking for this date or time is full. Please book a different slot."),
+                                          ))
+                                        }
                                       }),
-                                      isFirstPartVisible = false,
-                                      isSecondPartVisible = false,
-                                      isThirdPartVisible = true,
-                                    });
-                                  })
+                                    })
+                                  }),
                                 }
                               },
 

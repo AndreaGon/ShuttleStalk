@@ -9,27 +9,17 @@ import '../../view_model/realtime/realtime_view_model.dart';
 class BookingCardLayout extends StatelessWidget {
   final String routeName;
   final String pickupDropoff;
-  final String departureTime;
+  final String bookingTime;
   final String sourceLocation;
   final String bookingId;
   final String bookingDate;
   final String routeId;
 
 
-  const BookingCardLayout({Key? key, required this.routeName, required this.departureTime, required this.pickupDropoff, required this.sourceLocation, required this.bookingId, required this.bookingDate, required this.routeId}) : super(key: key);
+  BookingCardLayout({Key? key, required this.routeName, required this.bookingTime, required this.pickupDropoff, required this.sourceLocation, required this.bookingId, required this.bookingDate, required this.routeId}) : super(key: key);
 
-  // Future getShuttleInfoFromRoute() async{
-  //   String shuttleId;
-  //   var shuttleData = {};
-  //   await bookingVM.getRouteInfoId(routeId).then((value) async => {
-  //     shuttleId = value.data()["shuttleId"],
-  //     await bookingVM.getShuttleFromRoute(shuttleId).then((value) => {
-  //       shuttleData = value.data()
-  //     })
-  //   });
-  //
-  //   return shuttleData;
-  // }
+
+  int hoursDifference = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +29,7 @@ class BookingCardLayout extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.only(bottom: 25.0),
       child:  Container(
-        height: 200,
+        height: 270,
         width: MediaQuery.of(context).size.width,
         decoration: BoxDecoration(
           color: Colors.white,
@@ -68,7 +58,7 @@ class BookingCardLayout extends StatelessWidget {
 
             Padding(
               padding: EdgeInsets.only(top: 15.0, left: 15.0),
-              child: Text("Departure time from campus: " + departureTime, style: TextStyle(color: darkblue)),
+              child: Text("Departure time from campus: " + bookingTime, style: TextStyle(color: darkblue)),
             ),
 
             Padding(
@@ -77,7 +67,7 @@ class BookingCardLayout extends StatelessWidget {
                   width: MediaQuery.of(context).size.width,
                   height: 50.0,
                   child: ElevatedButton(
-                    child: Text("More Information", style: TextStyle(color: darkblue),),
+                    child: Text("View in Real Time", style: TextStyle(color: darkblue),),
                     style: ElevatedButton.styleFrom(
                       primary: skyblue,
                       elevation: 0,
@@ -86,7 +76,7 @@ class BookingCardLayout extends StatelessWidget {
                       var isJourneyStarted;
                       var shuttleId;
                       var shuttleData;
-                      realTimeVM.getRealTimeLocationFuture(routeId, bookingDate, departureTime).then((value) => {
+                      realTimeVM.getRealTimeLocationFuture(routeId, bookingDate, bookingTime).then((value) => {
                         isJourneyStarted = value.docs.first.data()["isJourneyStarted"],
                         bookingVM.getRouteInfoId(routeId).then((value) => {
                           shuttleId = value.data()["shuttleId"],
@@ -96,7 +86,7 @@ class BookingCardLayout extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => RealTimeView(sourceLocation: sourceLocation, bookingId: bookingId, bookingDate: bookingDate, bookingTime: departureTime, routeId: routeId, shuttleData: shuttleData),
+                                    builder: (context) => RealTimeView(sourceLocation: sourceLocation, bookingId: bookingId, bookingDate: bookingDate, bookingTime: bookingTime, routeId: routeId, shuttleData: shuttleData),
                                   ),
                                 )
                               }
@@ -113,10 +103,74 @@ class BookingCardLayout extends StatelessWidget {
                     },
                   ),
                 )
+            ),
+
+            Padding(
+                padding: EdgeInsets.only(bottom: 5, left: 25, right: 20, top: 10),
+                child: Container(
+                  width: MediaQuery.of(context).size.width,
+                  height: 50.0,
+                  child: ElevatedButton(
+                    child: Text("Cancel Booking", style: TextStyle(color: white)),
+                    style: ElevatedButton.styleFrom(
+                      primary: red,
+                      elevation: 0,
+                    ),
+                    onPressed: () {
+                      calculateTimeBetweenBooking();
+                      if(hoursDifference > 2){
+                        showDialog<String>(
+                          context: context,
+                          builder: (BuildContext context) => AlertDialog(
+                            title: const Text('Are you sure?'),
+                            content: const Text("This will cancel your shuttle booking. There will be no penalty for the cancellation"),
+                            actions: <Widget>[
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, 'Cancel'),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () => {
+                                  Navigator.of(context).pop(),
+                                  bookingVM.deleteBooking(bookingId).then((value) => {
+                                    Navigator.of(context).pop(),
+                                  })
+                                },
+                                child: const Text("Yes, I'm sure"),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      else{
+                        showDialog<String>(
+                          context: context,
+                          builder: (BuildContext context) => AlertDialog(
+                            title: const Text('Notice'),
+                            content: const Text("Cancellation can only be done 2 hours before your booking!"),
+                            actions: <Widget>[
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, 'Okay'),
+                                child: const Text('Okay'),
+                              )
+                            ],
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                )
             )
           ],
         ),
       )
     );
+  }
+
+  calculateTimeBetweenBooking(){
+    DateTime dateTimeNow = DateTime.now();
+    DateTime bookingDateTime = DateTime.parse("${bookingDate} ${bookingTime}:00");
+
+    hoursDifference = bookingDateTime.difference(dateTimeNow).inHours;
   }
 }

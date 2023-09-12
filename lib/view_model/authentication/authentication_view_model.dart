@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shuttle_stalk/view/authentication/login_view.dart';
 import 'package:shuttle_stalk/view/booking/booking_view.dart';
 import 'package:shuttle_stalk/view/main_view.dart';
@@ -56,7 +57,7 @@ class AuthenticationVM {
 
   Future<void> loginUser(BuildContext context, String email, String password) async {
     try {
-      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: email,
           password: password
       );
@@ -64,6 +65,8 @@ class AuthenticationVM {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text("Logged IN!"),
       ));
+
+      await saveUserLoginState(userCredential.user!);
 
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
@@ -84,6 +87,15 @@ class AuthenticationVM {
     }
   }
 
+  Future<bool> isLoggedIn(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('user_id');
+    if (userId != null) {
+      return true;
+    }
+    return false;
+  }
+
 
   Future getCurrentUser(String userAuthId) async{
     return await students.where('userAuthId', isEqualTo: userAuthId)
@@ -101,7 +113,14 @@ class AuthenticationVM {
     });
   }
 
+  Future<void> saveUserLoginState(User user) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString('user_id', user.uid);
+  }
+
   Future signOut() async{
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('user_id');
     await FirebaseAuth.instance.signOut();
   }
 }

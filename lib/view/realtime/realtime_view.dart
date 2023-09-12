@@ -1,17 +1,23 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:easy_geofencing/easy_geofencing.dart';
+import 'package:easy_geofencing/enums/geofence_status.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shuttle_stalk/view_model/realtime/realtime_view_model.dart';
 
 import '../../res/colors.dart';
 import '../../view_model/booking/booking_view_model.dart';
+
+import '../../res/env.dart' as ENV;
 
 class RealTimeView extends StatefulWidget {
   String sourceLocation;
@@ -45,6 +51,7 @@ class _RealTimeViewState extends State<RealTimeView> {
   GeoPoint driverLocation = GeoPoint(0.0, 0.0);
   LatLng source = LatLng(0.0, 0.0);
 
+
   @override
   void initState() {
     initDestinationLocation();
@@ -54,13 +61,11 @@ class _RealTimeViewState extends State<RealTimeView> {
 
   @override
   void dispose() {
-    // Cancel or clean up ongoing tasks (e.g., cancel HTTP requests, close streams).
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    calculateTimeBetweenBooking();
     return Scaffold(
       appBar: AppBar(
         title: Text(""),
@@ -68,7 +73,6 @@ class _RealTimeViewState extends State<RealTimeView> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
-            // Add navigation logic here, e.g., to pop the current screen
             Navigator.of(context).pop();
           },
         ),
@@ -190,66 +194,30 @@ class _RealTimeViewState extends State<RealTimeView> {
                                       elevation: 0,
                                     ),
                                     onPressed: () {
-                                    },
-                                  ),
-                                )
-                            ),
-                            Padding(
-                                padding: EdgeInsets.only(bottom: 5, left: 25, right: 20, top: 30),
-                                child: Container(
-                                  width: MediaQuery.of(context).size.width,
-                                  height: 50.0,
-                                  child: ElevatedButton(
-                                    child: Text("Cancel Booking", style: TextStyle(color: white),),
-                                    style: ElevatedButton.styleFrom(
-                                      primary: red,
-                                      elevation: 0,
-                                    ),
-                                    onPressed: () {
-                                      if(hoursDifference > 2){
-                                        showDialog<String>(
-                                          context: context,
-                                          builder: (BuildContext context) => AlertDialog(
-                                            title: const Text('Are you sure?'),
-                                            content: const Text("This will cancel your shuttle booking. There will be no penalty for the cancellation"),
-                                            actions: <Widget>[
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(context, 'Cancel'),
-                                                child: const Text('Cancel'),
-                                              ),
-                                              TextButton(
-                                                onPressed: () => {
-                                                  Navigator.of(context).pop(),
-                                                  bookingVM.deleteBooking(widget.bookingId).then((value) => {
-                                                    Navigator.of(context).pop(),
-                                                  })
-                                                },
-                                                child: const Text("Yes, I'm sure"),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      }
-                                      else{
-                                        showDialog<String>(
-                                          context: context,
-                                          builder: (BuildContext context) => AlertDialog(
-                                            title: const Text('Notice'),
-                                            content: const Text("Cancellation can only be done 2 hours before your booking!"),
-                                            actions: <Widget>[
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(context, 'Okay'),
-                                                child: const Text('Okay'),
-                                              )
-                                            ],
-                                          ),
-                                        );
-                                      }
+
+                                      var proximityThreshold = 1000.0;
+
+                                      determinePosition().then((value) => {
+                                        distanceCalculation(value.latitude, value.longitude,driverLocation.latitude, driverLocation.longitude).then((result) => {
+                                          if(result <= proximityThreshold){
+                                            bookingVM.markAttendance(widget.bookingId),
+                                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                              content: Text("Successfully marked attendance!"),
+                                            )),
+                                            Navigator.of(context).pop(),
+                                          }
+                                          else{
+                                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                              content: Text("Cannot mark attendance as shuttle is not nearby."),
+                                            ))
+                                          }
+                                        })
+                                      });
 
                                     },
                                   ),
                                 )
-                            )
+                            ),
                           ],
                         ),
                       ),
@@ -277,14 +245,6 @@ class _RealTimeViewState extends State<RealTimeView> {
 
     return destination;
   }
-
-  calculateTimeBetweenBooking(){
-    DateTime dateTimeNow = DateTime.now();
-    DateTime bookingDateTime = DateTime.parse("${widget.bookingDate} ${widget.bookingTime}:00");
-
-    hoursDifference = bookingDateTime.difference(dateTimeNow).inHours;
-  }
-
 
   void setCustomMarkerIcon() async{
     await BitmapDescriptor.fromAssetImage(
@@ -316,7 +276,7 @@ class _RealTimeViewState extends State<RealTimeView> {
     List<LatLng> polylineCoordinates = [];
     polylineCoordinates.clear();
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-      "AIzaSyBPOUA1S51D3-RZnahp5ZeXEbmIs4iMmmI",
+      ENV.GOOGLE_API_KEY,
       PointLatLng(sourceLat, sourceLong),
       PointLatLng(destLat, destLong),
       travelMode: TravelMode.driving,
@@ -333,21 +293,73 @@ class _RealTimeViewState extends State<RealTimeView> {
 
   Future getDistanceMatrix() async {
     try {
-      var response = await Dio().get('https://maps.googleapis.com/maps/api/distancematrix/json?origins=${source.latitude},${source.longitude}&destinations=${driverLocation.latitude},${driverLocation.longitude}&key=AIzaSyBPOUA1S51D3-RZnahp5ZeXEbmIs4iMmmI');
+      //var response = await Dio().get('https://maps.googleapis.com/maps/api/distancematrix/json?origins=${source.latitude},${source.longitude}&destinations=${driverLocation.latitude},${driverLocation.longitude}&key=');
       //return await (response.data["rows"][0]["elements"][0]["duration"]["text"]).toString();
-      distanceTime = response.data;
+      //distanceTime = response.data;
 
-      if(distanceTime["rows"][0]["elements"][0]["status"] == "ZERO_RESULT"){
-        getDistanceMatrix();
-      }
-      else{
-        if(mounted){
-          setState(() {});
-        }
+      distanceTime = null;
+
+      // if(distanceTime["rows"][0]["elements"][0]["status"] == "ZERO_RESULT"){
+      //   getDistanceMatrix();
+      // }
+      // else{
+      //   if(mounted){
+      //     setState(() {});
+      //   }
+      // }
+
+      return distanceTime;
+
+      if(mounted){
+        setState(() {});
       }
     } catch (e) {
       print(e);
     }
   }
 
+  markAttendance() {
+
+  }
+
+  Future<Position> determinePosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // Test if location services are enabled.
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      // Location services are not enabled don't continue
+      // accessing the position and request users of the
+      // App to enable the location services.
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        // Permissions are denied, next time you could try
+        // requesting permissions again (this is also where
+        // Android's shouldShowRequestPermissionRationale
+        // returned true. According to Android guidelines
+        // your App should show an explanatory UI now.
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      // Permissions are denied forever, handle appropriately.
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+
+    // When we reach here, permissions are granted and we can
+    // continue accessing the position of the device.
+    return await Geolocator.getCurrentPosition();
+  }
+
+  Future<double> distanceCalculation(userLat, userLong, driverLat, driverLong) async {
+    return await Geolocator.distanceBetween(userLat, userLong, driverLat, driverLong);
+  }
 }
