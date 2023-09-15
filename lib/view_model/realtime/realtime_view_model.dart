@@ -63,11 +63,15 @@ class RealTimeVM {
 
   Future<void> addLocation(Locations locations) async {
     locationRef.add({
+      "routeName": locations.routeName,
       "routeId": locations.routeId,
       "time": locations.time,
       "date": locations.date,
       "shuttleLocation": null,
-      "isJourneyStarted": locations.isJourneyStarted
+      "driverId": locations.driverId,
+      "is_journey_started": locations.isJourneyStarted,
+      "is_journey_finished": false,
+      "pickupDropoff": locations.pickupDropoff
     });
   }
 }

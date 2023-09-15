@@ -48,7 +48,7 @@ class BookingCardLayout extends StatelessWidget {
           children: [
             Padding(
               padding: EdgeInsets.only(top: 15.0, left: 15.0),
-              child: Text("Route " + routeName + " (" + pickupDropoff + ")", style: TextStyle(color: darkblue, fontSize: 15.0, fontWeight: FontWeight.bold)),
+              child: Text(routeName + " (" + pickupDropoff + ")", style: TextStyle(color: darkblue, fontSize: 15.0, fontWeight: FontWeight.bold)),
             ),
 
             Padding(
@@ -77,7 +77,7 @@ class BookingCardLayout extends StatelessWidget {
                       var shuttleId;
                       var shuttleData;
                       realTimeVM.getRealTimeLocationFuture(routeId, bookingDate, bookingTime).then((value) => {
-                        isJourneyStarted = value.docs.first.data()["isJourneyStarted"],
+                        isJourneyStarted = value.docs.first.data()["is_journey_started"],
                         bookingVM.getRouteInfoId(routeId).then((value) => {
                           shuttleId = value.data()["shuttleId"],
                             bookingVM.getShuttleFromRoute(shuttleId).then((value) => {

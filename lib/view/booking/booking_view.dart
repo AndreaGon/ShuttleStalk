@@ -49,7 +49,7 @@ class _BookingState extends State<Booking> {
       routeId: ""
   );
 
-  Locations location = Locations(routeId: "", time: "", date: "", shuttleLocation: "", shuttlePlateNo: '', isJourneyStarted: false);
+  Locations location = Locations(routeId: "", time: "", date: "", shuttleLocation: "", shuttlePlateNo: '', isJourneyStarted: false, driverId: '', routeName: '', pickupDropoff: '');
 
   @override
   Widget build(BuildContext context) {
@@ -380,6 +380,7 @@ class _BookingState extends State<Booking> {
                             var studentInfo;
                             var shuttleId;
                             var shuttleInfo;
+                            var routeData;
                             authVM.getCurrentUser(FirebaseAuth.instance.currentUser!.uid).then((value) => {
                               studentInfo = value.docs.map((DocumentSnapshot doc) => doc.data() as Map<String, dynamic>).toList(),
                               if(studentInfo[0]["is_banned"]){
@@ -395,6 +396,8 @@ class _BookingState extends State<Booking> {
                                   ))
                                 }
                                 else{
+                                  location.pickupDropoff = currentBooking.pickupDropoff,
+                                  location.routeName = currentBooking.routeName,
                                   location.routeId = currentBooking.routeId,
                                   location.time = currentBooking.time,
                                   location.date = currentBooking.date,
@@ -402,14 +405,18 @@ class _BookingState extends State<Booking> {
                                   location.shuttlePlateNo = "",
                                   location.isJourneyStarted = false,
 
+                                  print("LOCATION: " + location.pickupDropoff),
+
 
                                   bookingVM.getRouteInfoId(currentBooking.routeId).then((route) => {
-                                    shuttleId = route.data()["shuttleId"],
+                                    routeData = route.data(),
+                                    shuttleId = routeData["shuttleId"],
                                     bookingVM.getShuttleFromRoute(shuttleId).then((shuttle) => {
                                       shuttleInfo = shuttle.data(),
                                       bookingVM.getNumberOfBooking(currentBooking.routeId, currentBooking.date, currentBooking.time).then((bookingNumber) => {
                                         if(bookingNumber < shuttleInfo["seats"]){
                                           setState(() {
+                                            location.driverId = routeData["driverId"];
                                             location.shuttlePlateNo = shuttleInfo["plateNo"];
                                             isFirstPartVisible = false;
                                             isSecondPartVisible = false;
