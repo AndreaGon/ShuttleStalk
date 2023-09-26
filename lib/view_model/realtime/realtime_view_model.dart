@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../models/locations.dart';
 
@@ -6,7 +10,7 @@ class RealTimeVM {
   CollectionReference routes = FirebaseFirestore.instance.collection('routes');
   CollectionReference locationRef = FirebaseFirestore.instance.collection('locations');
 
-  Future<bool> isLocationRefExisting(String routeId, String date, String time) async{
+  Future isLocationRefExisting(String routeId, String date, String time) async{
     try {
       // Perform a "where" query with multiple conditions and limit to one document
       QuerySnapshot querySnapshot = await locationRef
@@ -19,10 +23,10 @@ class RealTimeVM {
       // Check if there are any matching documents
       if (querySnapshot.docs.isNotEmpty) {
         // Retrieve and process the single document
-        QueryDocumentSnapshot document = querySnapshot.docs.first;
-        return true;
+        //QueryDocumentSnapshot document = querySnapshot.docs.first;
+        return querySnapshot;
       } else {
-        return false;
+        return null;
       }
     } catch (e) {
       print('Error querying Firestore: $e');
@@ -45,7 +49,8 @@ class RealTimeVM {
     Stream<QuerySnapshot> querySnapshot = locationRef
         .where('routeId', isEqualTo: routeId) // Replace with your field and value
         .where('date', isEqualTo: date)
-        .where('time', isEqualTo: time) // Limit the result to one document
+        .where('time', isEqualTo: time)
+        .limit(1)
         .snapshots();
     
     return querySnapshot.map(
@@ -62,7 +67,23 @@ class RealTimeVM {
   }
 
   Future<void> addLocation(Locations locations) async {
-    locationRef.add({
+    var uuid = Uuid();
+    var uuidV4 = uuid.v4();
+    var waypoint;
+
+    LatLng sourceLocation = LatLng(0.0, 0.0);
+    String validJson = (locations.bookingLocations).replaceAllMapped(
+      RegExp(r'(\w+):'), // Match unquoted keys
+          (Match match) => '"${match.group(1)}":', // Add double quotes to keys
+    );
+
+    waypoint = await json.decode('${validJson}');
+    sourceLocation = LatLng(waypoint["latitude"], waypoint["longitude"]);
+
+    GeoPoint sourceGeopoint = GeoPoint(sourceLocation.latitude, sourceLocation.longitude);
+
+    locationRef.doc(uuidV4).set({
+      "id": uuidV4,
       "routeName": locations.routeName,
       "routeId": locations.routeId,
       "time": locations.time,
@@ -71,7 +92,27 @@ class RealTimeVM {
       "driverId": locations.driverId,
       "is_journey_started": locations.isJourneyStarted,
       "is_journey_finished": false,
-      "pickupDropoff": locations.pickupDropoff
+      "pickupDropoff": locations.pickupDropoff,
+      "booking_locations": [sourceGeopoint]
+    });
+  }
+
+  Future<void> updateLocationList(String id, Locations locations) async {
+    var waypoint;
+
+    LatLng sourceLocation = LatLng(0.0, 0.0);
+    String validJson = (locations.bookingLocations).replaceAllMapped(
+      RegExp(r'(\w+):'), // Match unquoted keys
+          (Match match) => '"${match.group(1)}":', // Add double quotes to keys
+    );
+
+    waypoint = await json.decode('${validJson}');
+    sourceLocation = LatLng(waypoint["latitude"], waypoint["longitude"]);
+
+    GeoPoint sourceGeopoint = GeoPoint(sourceLocation.latitude, sourceLocation.longitude);
+
+    locationRef.doc(id).update({
+      "booking_locations": FieldValue.arrayUnion([sourceGeopoint])
     });
   }
 }

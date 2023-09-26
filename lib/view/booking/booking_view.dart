@@ -49,7 +49,7 @@ class _BookingState extends State<Booking> {
       routeId: ""
   );
 
-  Locations location = Locations(routeId: "", time: "", date: "", shuttleLocation: "", shuttlePlateNo: '', isJourneyStarted: false, driverId: '', routeName: '', pickupDropoff: '');
+  Locations location = Locations(routeId: "", time: "", date: "", shuttleLocation: "", shuttlePlateNo: '', isJourneyStarted: false, driverId: '', routeName: '', pickupDropoff: '', bookingLocations: '');
 
   @override
   Widget build(BuildContext context) {
@@ -381,12 +381,13 @@ class _BookingState extends State<Booking> {
                             var shuttleId;
                             var shuttleInfo;
                             var routeData;
-                            authVM.getCurrentUser(FirebaseAuth.instance.currentUser!.uid).then((value) => {
+                            var locationData;
+                            authVM.getCurrentUser(FirebaseAuth.instance.currentUser!.uid).then((value) async => {
                               studentInfo = value.docs.map((DocumentSnapshot doc) => doc.data() as Map<String, dynamic>).toList(),
-                              if(studentInfo[0]["is_banned"]){
+                              if(studentInfo[0]["no_show"] >= 3){
                                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                                   content: Text("You are currently banned from booking. Please see the AFM office"),
-                                ))
+                                )),
                               }
                               else{
                                 currentBooking.studentId = studentInfo[0]["id"],
@@ -405,9 +406,6 @@ class _BookingState extends State<Booking> {
                                   location.shuttlePlateNo = "",
                                   location.isJourneyStarted = false,
 
-                                  print("LOCATION: " + location.pickupDropoff),
-
-
                                   bookingVM.getRouteInfoId(currentBooking.routeId).then((route) => {
                                     routeData = route.data(),
                                     shuttleId = routeData["shuttleId"],
@@ -418,14 +416,19 @@ class _BookingState extends State<Booking> {
                                           setState(() {
                                             location.driverId = routeData["driverId"];
                                             location.shuttlePlateNo = shuttleInfo["plateNo"];
+                                            location.bookingLocations = currentBooking.route;
                                             isFirstPartVisible = false;
                                             isSecondPartVisible = false;
                                             isThirdPartVisible = true;
                                             bookingVM.addBooking(currentBooking).then((value) => {
-                                              realtimeVM.isLocationRefExisting(location.routeId, location.date, location.time).then((isExisting) => {
-                                                if(!isExisting){
+                                              realtimeVM.isLocationRefExisting(location.routeId, location.date, location.time).then((locationDoc) => {
+                                                if(locationDoc == null){
                                                   realtimeVM.addLocation(location).then((value)=> {
                                                   })
+                                                }
+                                                else{
+                                                  locationData = locationDoc.docs.first.data(),
+                                                  realtimeVM.updateLocationList(locationData["id"], location).then((value) => {})
                                                 },
                                               }),
                                             });

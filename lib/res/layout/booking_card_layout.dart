@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shuttle_stalk/res/colors.dart';
@@ -10,7 +11,7 @@ class BookingCardLayout extends StatelessWidget {
   final String routeName;
   final String pickupDropoff;
   final String bookingTime;
-  final String sourceLocation;
+  final GeoPoint sourceLocation;
   final String bookingId;
   final String bookingDate;
   final String routeId;
@@ -76,7 +77,9 @@ class BookingCardLayout extends StatelessWidget {
                       var isJourneyStarted;
                       var shuttleId;
                       var shuttleData;
+                      var locationData;
                       realTimeVM.getRealTimeLocationFuture(routeId, bookingDate, bookingTime).then((value) => {
+                        locationData = value.docs.first.data()["booking_locations"],
                         isJourneyStarted = value.docs.first.data()["is_journey_started"],
                         bookingVM.getRouteInfoId(routeId).then((value) => {
                           shuttleId = value.data()["shuttleId"],
@@ -86,7 +89,7 @@ class BookingCardLayout extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => RealTimeView(sourceLocation: sourceLocation, bookingId: bookingId, bookingDate: bookingDate, bookingTime: bookingTime, routeId: routeId, shuttleData: shuttleData),
+                                    builder: (context) => RealTimeView(allSourceLocation: locationData, sourceLocation: sourceLocation, bookingId: bookingId, bookingDate: bookingDate, bookingTime: bookingTime, routeId: routeId, shuttleData: shuttleData),
                                   ),
                                 )
                               }
@@ -132,9 +135,7 @@ class BookingCardLayout extends StatelessWidget {
                               TextButton(
                                 onPressed: () => {
                                   Navigator.of(context).pop(),
-                                  bookingVM.deleteBooking(bookingId).then((value) => {
-                                    Navigator.of(context).pop(),
-                                  })
+                                  bookingVM.deleteBooking(bookingId).then((value) => {})
                                 },
                                 child: const Text("Yes, I'm sure"),
                               ),

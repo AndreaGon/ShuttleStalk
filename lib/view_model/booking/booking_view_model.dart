@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shuttle_stalk/models/bookings.dart';
 import 'package:uuid/uuid.dart';
 
@@ -44,13 +47,27 @@ class BookingVM {
   Future<void> addBooking(Bookings bookings) async {
     var uuid = Uuid();
     var uuidV4 = uuid.v4();
+
+    var waypoint;
+
+    LatLng sourceLocation = LatLng(0.0, 0.0);
+    String validJson = (bookings.route).replaceAllMapped(
+      RegExp(r'(\w+):'), // Match unquoted keys
+          (Match match) => '"${match.group(1)}":', // Add double quotes to keys
+    );
+
+    waypoint = await json.decode('${validJson}');
+    sourceLocation = LatLng(waypoint["latitude"], waypoint["longitude"]);
+
+    GeoPoint sourceGeopoint = GeoPoint(sourceLocation.latitude, sourceLocation.longitude);
+
     bookingRef.doc(uuidV4).set({
       "id": uuidV4,
       "routeName": bookings.routeName,
       "pickupDropoff": bookings.pickupDropoff,
       "time": bookings.time,
       "date": bookings.date,
-      "route": bookings.route,
+      "route": sourceGeopoint,
       "studentId": bookings.studentId,
       "routeId": bookings.routeId,
       "attendance_marked": false,

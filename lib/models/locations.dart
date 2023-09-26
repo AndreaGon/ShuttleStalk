@@ -8,6 +8,7 @@ class Locations {
   String driverId;
   bool isJourneyStarted;
   String pickupDropoff;
+  String bookingLocations;
 
   Locations({
     required this.routeName,
@@ -18,7 +19,8 @@ class Locations {
     required this.shuttlePlateNo,
     required this.driverId,
     required this.isJourneyStarted,
-    required this.pickupDropoff
+    required this.pickupDropoff,
+    required this.bookingLocations
   });
 
   factory Locations.fromJson(Map<String, dynamic> parsedJson){
@@ -31,7 +33,8 @@ class Locations {
       shuttlePlateNo: parsedJson['shuttlePlateNo'].toString(),
       driverId: parsedJson['driverId'].toString(),
       isJourneyStarted: parsedJson['isJourneyStarted'],
-      pickupDropoff: parsedJson['pickupDropoff'].toString()
+      pickupDropoff: parsedJson['pickupDropoff'].toString(),
+      bookingLocations: parsedJson['bookingLocations'].toString()
     );
   }
 
@@ -43,6 +46,7 @@ class Locations {
     'shuttleLocation': shuttleLocation,
     'shuttlePlateNo': shuttlePlateNo,
     'isJourneyStarted': isJourneyStarted,
-    'pickupDropoff': pickupDropoff
+    'pickupDropoff': pickupDropoff,
+    'bookingLocations': bookingLocations
   };
 }

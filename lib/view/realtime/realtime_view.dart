@@ -3,8 +3,9 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
-
+import 'package:google_maps_utils/google_maps_utils.dart' as utils;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:math' as math;
 import 'package:easy_geofencing/easy_geofencing.dart';
 import 'package:easy_geofencing/enums/geofence_status.dart';
 import 'package:flutter/cupertino.dart';
@@ -20,14 +21,15 @@ import '../../view_model/booking/booking_view_model.dart';
 import '../../res/env.dart' as ENV;
 
 class RealTimeView extends StatefulWidget {
-  String sourceLocation;
+  GeoPoint sourceLocation;
   String bookingId;
   String bookingDate;
   String bookingTime;
   String routeId;
+  List<dynamic> allSourceLocation;
   Map<String, dynamic> shuttleData;
 
-  RealTimeView({Key? key, required this.sourceLocation, required this.bookingId, required this.bookingDate, required this.bookingTime, required this.routeId, required this.shuttleData}) : super(key: key);
+  RealTimeView({Key? key, required this.allSourceLocation, required this.sourceLocation, required this.bookingId, required this.bookingDate, required this.bookingTime, required this.routeId, required this.shuttleData}) : super(key: key);
 
   @override
   State<RealTimeView> createState() => _RealTimeViewState();
@@ -50,11 +52,14 @@ class _RealTimeViewState extends State<RealTimeView> {
   Map<PolylineId, Polyline> polylines = {};
   GeoPoint driverLocation = GeoPoint(0.0, 0.0);
   LatLng source = LatLng(0.0, 0.0);
+  LatLng driverLatLng = LatLng(0.0,0.0);
 
+  Set<Marker> markers = Set();
 
   @override
   void initState() {
-    initDestinationLocation();
+//    initDestinationLocation();
+    //initAllSourceLocation();
     setCustomMarkerIcon();
     super.initState();
   }
@@ -89,43 +94,35 @@ class _RealTimeViewState extends State<RealTimeView> {
 
               driverLocation = snapshot.data["shuttleLocation"];
 
-              final latLng = LatLng(driverLocation.latitude, driverLocation.longitude);
+              driverLatLng = LatLng(driverLocation.latitude, driverLocation.longitude);
 
-              return FutureBuilder(
-                  builder: (ctx, snapshot){
-                    if(!snapshot.hasData) {
-                      return Center(child: CircularProgressIndicator());
-                    }
-                    else{
-                      source = snapshot.data as LatLng;
-                      getPolyline(driverLocation.latitude, driverLocation.longitude, source.latitude, source.longitude);
+              source = LatLng(widget.sourceLocation.latitude, widget.sourceLocation.longitude);
+              //getPolyline(source.longitude, source.latitude, driverLocation.longitude, driverLocation.latitude);
 
-                    }
-                    return GoogleMap(
-                      initialCameraPosition: CameraPosition(
-                        target: source,
-                        zoom: 13.5,
-                      ),
-                      markers: {
-                        Marker(
-                          markerId: MarkerId("destination"),
-                          position: source,
-                        ),
-                        Marker(
-                          markerId: MarkerId("location"),
-                          position: latLng,
-                          icon: driverIcon,
-                        )
+              markers.add(Marker(markerId: MarkerId("driver"), position: driverLatLng, icon: driverIcon));
 
-                      },
-                      onMapCreated: (mapController) {
-                        _controller.complete(mapController);
-                      },
-                      polylines: Set<Polyline>.of(polylines.values),
-                    );
-                  },
+              print("LOCATION CHANGE: " + driverLatLng.toString());
+              return GoogleMap(
+                initialCameraPosition: CameraPosition(
+                  target: source,
+                  zoom: 13.5,
+                ),
+                markers: {
+                  Marker(
+                    markerId: MarkerId("destination"),
+                    position: source,
+                  ),
+                  Marker(
+                    markerId: MarkerId("location"),
+                    position: driverLatLng,
+                    icon: driverIcon,
+                  )
 
-                  future: initDestinationLocation()
+                },
+                onMapCreated: (mapController) {
+                  _controller.complete(mapController);
+                },
+                polylines: Set<Polyline>.of(polylines.values),
               );
             }
           ),
@@ -135,97 +132,167 @@ class _RealTimeViewState extends State<RealTimeView> {
             minChildSize: 0.2,
             maxChildSize: 0.8,
             builder: (BuildContext context, ScrollController scrollController) {
-              return FutureBuilder(
-                  builder: (ctx, AsyncSnapshot snapshot) {
-                    var estimatedTimeArrival;
+              return Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 1,
+                      blurRadius: 7,
+                      offset: Offset(0, 3), // changes position of shadow
+                    ),
+                  ],
+                  // border: Border.all(color: Colors.blue, width: 2),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(50),
+                    topRight: Radius.circular(50),
+                  ),
 
-                    if(distanceTime != null){
-                      estimatedTimeArrival = distanceTime["rows"][0]["elements"][0]["duration"];
-                    }
-
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.2),
-                            spreadRadius: 1,
-                            blurRadius: 7,
-                            offset: Offset(0, 3), // changes position of shadow
-                          ),
-                        ],
-                        // border: Border.all(color: Colors.blue, width: 2),
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(50),
-                          topRight: Radius.circular(50),
-                        ),
-
+                ),
+                child: Scrollbar(
+                  child: ListView(
+                    controller: scrollController,
+                    children: [
+                      Padding(
+                          padding: EdgeInsets.only(left: 25, right: 20, top: 50),
+                          child: Container(
+                            width: MediaQuery.of(context).size.width,
+                            height: 50.0,
+                            child: Text("Shuttle Plate No: ${widget.shuttleData["plateNo"]}", style: TextStyle(color: darkblue, fontSize: 20.0, fontWeight: FontWeight.bold)),
+                          )
                       ),
-                      child: Scrollbar(
-                        child: ListView(
-                          controller: scrollController,
-                          children: [
-                            Padding(
-                                padding: EdgeInsets.only(left: 25, right: 20, top: 50),
-                                child: Container(
-                                  width: MediaQuery.of(context).size.width,
-                                  height: 50.0,
-                                  child: Text("Shuttle Plate No: ${widget.shuttleData["plateNo"]}", style: TextStyle(color: darkblue, fontSize: 20.0, fontWeight: FontWeight.bold)),
-                                )
-                            ),
-                            Padding(
-                                padding: EdgeInsets.only(left: 25, right: 20),
-                                child: Container(
-                                  width: MediaQuery.of(context).size.width,
-                                  height: 50.0,
-                                  child:
-                                  (estimatedTimeArrival == null) ? Text("ETA: No ETA at this time", style: TextStyle(color: darkblue, fontSize: 20.0, fontWeight: FontWeight.bold)): Text("ETA: " + (estimatedTimeArrival["text"]).toString(), style: TextStyle(color: darkblue, fontSize: 20.0, fontWeight: FontWeight.bold)),
-                                )
-                            ),
-                            Padding(
-                                padding: EdgeInsets.only(bottom: 5, left: 25, right: 20, top: 30),
-                                child: Container(
-                                  width: MediaQuery.of(context).size.width,
-                                  height: 50.0,
-                                  child: ElevatedButton(
-                                    child: Text("Mark Attendance", style: TextStyle(color: darkblue),),
-                                    style: ElevatedButton.styleFrom(
-                                      primary: skyblue,
-                                      elevation: 0,
-                                    ),
-                                    onPressed: () {
+                      Padding(
+                          padding: EdgeInsets.only(bottom: 5, left: 25, right: 20, top: 30),
+                          child: Container(
+                            width: MediaQuery.of(context).size.width,
+                            height: 50.0,
+                            child: ElevatedButton(
+                              child: Text("Mark Attendance", style: TextStyle(color: darkblue),),
+                              style: ElevatedButton.styleFrom(
+                                primary: skyblue,
+                                elevation: 0,
+                              ),
+                              onPressed: () {
 
-                                      var proximityThreshold = 1000.0;
+                                var proximityThreshold = 1000.0;
 
-                                      determinePosition().then((value) => {
-                                        distanceCalculation(value.latitude, value.longitude,driverLocation.latitude, driverLocation.longitude).then((result) => {
-                                          if(result <= proximityThreshold){
-                                            bookingVM.markAttendance(widget.bookingId),
-                                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                              content: Text("Successfully marked attendance!"),
-                                            )),
-                                            Navigator.of(context).pop(),
-                                          }
-                                          else{
-                                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                              content: Text("Cannot mark attendance as shuttle is not nearby."),
-                                            ))
-                                          }
-                                        })
-                                      });
+                                determinePosition().then((value) => {
+                                  distanceCalculation(value.latitude, value.longitude,driverLocation.latitude, driverLocation.longitude).then((result) => {
+                                    if(result <= proximityThreshold){
+                                      bookingVM.markAttendance(widget.bookingId),
+                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                        content: Text("Successfully marked attendance!"),
+                                      )),
+                                      Navigator.of(context).pop(),
+                                    }
+                                    else{
+                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                        content: Text("Cannot mark attendance as shuttle is not nearby."),
+                                      ))
+                                    }
+                                  })
+                                });
 
-                                    },
-                                  ),
-                                )
+                              },
                             ),
-                          ],
-                        ),
+                          )
                       ),
-                    );
-                  },
-
-                  future: getDistanceMatrix()
+                    ],
+                  ),
+                ),
               );
+              // return FutureBuilder(
+              //     builder: (ctx, AsyncSnapshot snapshot) {
+              //       var estimatedTimeArrival;
+              //
+              //       if(distanceTime != null){
+              //         estimatedTimeArrival = distanceTime["rows"][0]["elements"][0]["duration"];
+              //       }
+              //
+              //       return Container(
+              //         decoration: BoxDecoration(
+              //           color: Colors.white,
+              //           boxShadow: [
+              //             BoxShadow(
+              //               color: Colors.grey.withOpacity(0.2),
+              //               spreadRadius: 1,
+              //               blurRadius: 7,
+              //               offset: Offset(0, 3), // changes position of shadow
+              //             ),
+              //           ],
+              //           // border: Border.all(color: Colors.blue, width: 2),
+              //           borderRadius: BorderRadius.only(
+              //             topLeft: Radius.circular(50),
+              //             topRight: Radius.circular(50),
+              //           ),
+              //
+              //         ),
+              //         child: Scrollbar(
+              //           child: ListView(
+              //             controller: scrollController,
+              //             children: [
+              //               Padding(
+              //                   padding: EdgeInsets.only(left: 25, right: 20, top: 50),
+              //                   child: Container(
+              //                     width: MediaQuery.of(context).size.width,
+              //                     height: 50.0,
+              //                     child: Text("Shuttle Plate No: ${widget.shuttleData["plateNo"]}", style: TextStyle(color: darkblue, fontSize: 20.0, fontWeight: FontWeight.bold)),
+              //                   )
+              //               ),
+              //               Padding(
+              //                   padding: EdgeInsets.only(left: 25, right: 20),
+              //                   child: Container(
+              //                     width: MediaQuery.of(context).size.width,
+              //                     height: 50.0,
+              //                     child:
+              //                     (estimatedTimeArrival == null) ? Text("ETA: No ETA at this time", style: TextStyle(color: darkblue, fontSize: 20.0, fontWeight: FontWeight.bold)): Text("ETA: " + (estimatedTimeArrival["text"]).toString(), style: TextStyle(color: darkblue, fontSize: 20.0, fontWeight: FontWeight.bold)),
+              //                   )
+              //               ),
+              //               Padding(
+              //                   padding: EdgeInsets.only(bottom: 5, left: 25, right: 20, top: 30),
+              //                   child: Container(
+              //                     width: MediaQuery.of(context).size.width,
+              //                     height: 50.0,
+              //                     child: ElevatedButton(
+              //                       child: Text("Mark Attendance", style: TextStyle(color: darkblue),),
+              //                       style: ElevatedButton.styleFrom(
+              //                         primary: skyblue,
+              //                         elevation: 0,
+              //                       ),
+              //                       onPressed: () {
+              //
+              //                         var proximityThreshold = 1000.0;
+              //
+              //                         determinePosition().then((value) => {
+              //                           distanceCalculation(value.latitude, value.longitude,driverLocation.latitude, driverLocation.longitude).then((result) => {
+              //                             if(result <= proximityThreshold){
+              //                               bookingVM.markAttendance(widget.bookingId),
+              //                               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              //                                 content: Text("Successfully marked attendance!"),
+              //                               )),
+              //                               Navigator.of(context).pop(),
+              //                             }
+              //                             else{
+              //                               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              //                                 content: Text("Cannot mark attendance as shuttle is not nearby."),
+              //                               ))
+              //                             }
+              //                           })
+              //                         });
+              //
+              //                       },
+              //                     ),
+              //                   )
+              //               ),
+              //             ],
+              //           ),
+              //         ),
+              //       );
+              //     },
+              //
+              //     future: getDistanceMatrix()
+              // );
             },
           )
         ],
@@ -233,17 +300,20 @@ class _RealTimeViewState extends State<RealTimeView> {
     );
   }
 
-  Future<LatLng> initDestinationLocation() async {
-    LatLng destination = LatLng(0.0, 0.0);
-    String validJson = (widget.sourceLocation).replaceAllMapped(
-      RegExp(r'(\w+):'), // Match unquoted keys
-          (Match match) => '"${match.group(1)}":', // Add double quotes to keys
-    );
+  void initAllSourceLocation() {
+    LatLng bookingLocations = LatLng(0.0,0.0);
+    double isSame = 0.0;
+    for(var i = 0; i < widget.allSourceLocation.length; i++){
+      bookingLocations = LatLng(widget.allSourceLocation[i].latitude, widget.allSourceLocation[i].longitude);
+      isSame = Geolocator.distanceBetween(bookingLocations.latitude, bookingLocations.longitude, widget.sourceLocation.latitude, widget.sourceLocation.longitude);
+      if(isSame == 0.0){
+        markers.add(Marker(markerId: MarkerId("location"), position: bookingLocations));
+      }
+      else{
+        markers.add(Marker(markerId: MarkerId("location"), position: bookingLocations, icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen)));
+      }
 
-    waypoint = await json.decode('${validJson}');
-    destination = LatLng(waypoint["latitude"], waypoint["longitude"]);
-
-    return destination;
+    }
   }
 
   void setCustomMarkerIcon() async{
@@ -272,24 +342,27 @@ class _RealTimeViewState extends State<RealTimeView> {
     }
   }
 
-  void getPolyline(sourceLat, sourceLong, destLat, destLong) async {
+  void getPolyline(sourceLong, sourceLat, driverLong, driverLat) async {
     List<LatLng> polylineCoordinates = [];
     polylineCoordinates.clear();
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
       ENV.GOOGLE_API_KEY,
       PointLatLng(sourceLat, sourceLong),
-      PointLatLng(destLat, destLong),
+      PointLatLng(driverLat, driverLong),
       travelMode: TravelMode.driving,
     );
     if (result.points.isNotEmpty) {
       result.points.forEach((PointLatLng point) {
         polylineCoordinates.add(LatLng(point.latitude, point.longitude));
       });
+
     } else {
       print(result.errorMessage);
     }
     addPolyLine(polylineCoordinates);
   }
+
+
 
   Future getDistanceMatrix() async {
     try {
@@ -318,9 +391,6 @@ class _RealTimeViewState extends State<RealTimeView> {
     }
   }
 
-  markAttendance() {
-
-  }
 
   Future<Position> determinePosition() async {
     bool serviceEnabled;
