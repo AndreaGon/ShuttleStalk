@@ -25,7 +25,7 @@ class AuthenticationVM {
         'graduation_year': year,
         'email': email,
         'userAuthId': credential.user?.uid,
-        'is_banned': false,
+        'no_show': 0,
         'is_active_account': true
       })
           .then((value) => {
