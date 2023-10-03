@@ -10,7 +10,7 @@ class LocalNotificationService {
     // Initialization  setting for android
     const InitializationSettings initializationSettingsAndroid =
     InitializationSettings(
-        android: AndroidInitializationSettings("@drawable/launch_background"));
+        android: AndroidInitializationSettings("@mipmap/ic_launcher"));
     flutterLocalNotificationsPlugin.initialize(
       initializationSettingsAndroid,
       // to handle event when we receive notification
@@ -34,7 +34,9 @@ class LocalNotificationService {
             color: Colors.green,
             importance: Importance.max,
             playSound: true,
-            priority: Priority.high),
+            priority: Priority.high,
+            icon: '@mipmap/ic_launcher'
+        ),
       );
       await flutterLocalNotificationsPlugin.show(id, message.notification?.title,
           message.notification?.body, notificationDetails,

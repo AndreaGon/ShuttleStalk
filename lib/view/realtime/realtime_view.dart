@@ -175,7 +175,7 @@ class _RealTimeViewState extends State<RealTimeView> {
                               ),
                               onPressed: () {
 
-                                var proximityThreshold = 1000.0;
+                                var proximityThreshold = 500.0;
 
                                 determinePosition().then((value) => {
                                   distanceCalculation(value.latitude, value.longitude,driverLocation.latitude, driverLocation.longitude).then((result) => {
