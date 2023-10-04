@@ -48,7 +48,6 @@ class _HomeState extends State<Home> {
                         Icons.emoji_transportation,
                         color: Colors.white,
                         size: 120.0,
-                        semanticLabel: 'Text to announce in accessibility modes',
                       ),
                     )
                   ]

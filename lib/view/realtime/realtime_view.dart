@@ -175,7 +175,7 @@ class _RealTimeViewState extends State<RealTimeView> {
                               ),
                               onPressed: () {
 
-                                var proximityThreshold = 500.0;
+                                var proximityThreshold = 5.0;
 
                                 determinePosition().then((value) => {
                                   distanceCalculation(value.latitude, value.longitude,driverLocation.latitude, driverLocation.longitude).then((result) => {
@@ -192,6 +192,10 @@ class _RealTimeViewState extends State<RealTimeView> {
                                       ))
                                     }
                                   })
+                                }).catchError((onError)=>{
+                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                    content: Text("Failed to mark attendance. Please turn on your location!"),
+                                  ))
                                 });
 
                               },

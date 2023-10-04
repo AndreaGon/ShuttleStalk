@@ -6,6 +6,7 @@ import 'package:shuttle_stalk/view/authentication/login_view.dart';
 import 'package:shuttle_stalk/view/booking/booking_view.dart';
 import 'package:shuttle_stalk/view/main_view.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:uuid/uuid.dart';
 
 class AuthenticationVM {
 
@@ -17,7 +18,11 @@ class AuthenticationVM {
         email: email,
         password: password,
       );
-      students.add({
+      var uuid = Uuid();
+      var uuidV4 = uuid.v4();
+
+      students.doc().set({
+        'id': uuidV4,
         'fullname': fullname,
         'program': program,
         'ic_number': ic_number,
@@ -27,13 +32,7 @@ class AuthenticationVM {
         'userAuthId': credential.user?.uid,
         'no_show': 0,
         'is_active_account': true
-      })
-          .then((value) => {
-        students.doc(value.id).update({
-          "id": value.id
-        })
-      })
-          .catchError((error) => print("Failed to add book: $error"));
+      }).then((value) => {}).catchError((error) => print("Failed to add book: $error"));
 
 
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
