@@ -23,7 +23,7 @@ class _RegistrationState extends State<Registration> {
 
   final program = TextEditingController();
 
-  final ic_number = TextEditingController();
+  final matriculation = TextEditingController();
 
   final password = TextEditingController();
 
@@ -78,10 +78,10 @@ class _RegistrationState extends State<Registration> {
                         margin: const EdgeInsets.only(bottom: 10.0),
                         child: TextFormField(
                             obscureText: false,
-                            controller: ic_number,
+                            controller: matriculation,
                             decoration: const InputDecoration(
                                 border: OutlineInputBorder(),
-                                labelText: 'IC Number',
+                                labelText: 'Matriculation No.',
                                 filled: true,
                                 fillColor: white
                             )
@@ -157,7 +157,7 @@ class _RegistrationState extends State<Registration> {
                           ),
                           onPressed: () {
                             if(formKey.currentState!.validate()){
-                              AuthenticationVM().registerUser(context, username.text.trim(), program.text.trim(), ic_number.text.trim(), graduation_month, graduation_year, email.text.trim(), password.text.trim());
+                              AuthenticationVM().registerUser(context, username.text.trim(), program.text.trim(), matriculation.text.trim(), graduation_month, graduation_year, email.text.trim(), password.text.trim());
                             }
                           },
                           child: const Text("Register")

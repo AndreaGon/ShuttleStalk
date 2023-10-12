@@ -46,7 +46,9 @@ class _BookingState extends State<Booking> {
       date: "",
       route: "",
       studentId: "",
-      routeId: ""
+      routeId: "",
+      studentName: '',
+      studentMatriculation: ''
   );
 
   Locations location = Locations(routeId: "", time: "", date: "", shuttleLocation: "", shuttlePlateNo: '', isJourneyStarted: false, driverId: '', routeName: '', pickupDropoff: '', bookingLocations: '');
@@ -391,6 +393,8 @@ class _BookingState extends State<Booking> {
                               }
                               else{
                                 currentBooking.studentId = studentInfo[0]["id"],
+                                currentBooking.studentName = studentInfo[0]["fullname"],
+                                currentBooking.studentMatriculation = studentInfo[0]["matriculation"],
                                 if(currentBooking.time == "" || currentBooking.route == "" || currentBooking.date == ""){
                                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                                     content: Text("Please fill up all the forms"),

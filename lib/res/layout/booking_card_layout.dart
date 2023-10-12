@@ -75,17 +75,19 @@ class BookingCardLayout extends StatelessWidget {
                     ),
                     onPressed: () {
                       var isJourneyStarted;
+                      var currentDriverLocation;
                       var shuttleId;
                       var shuttleData;
                       var locationData;
                       realTimeVM.getRealTimeLocationFuture(routeId, bookingDate, bookingTime).then((value) => {
                         locationData = value.docs.first.data()["booking_locations"],
                         isJourneyStarted = value.docs.first.data()["is_journey_started"],
+                        currentDriverLocation = value.docs.first.data()["shuttleLocation"],
                         bookingVM.getRouteInfoId(routeId).then((value) => {
                           shuttleId = value.data()["shuttleId"],
                             bookingVM.getShuttleFromRoute(shuttleId).then((value) => {
                               shuttleData = value.data(),
-                              if(isJourneyStarted){
+                              if(isJourneyStarted && currentDriverLocation != null){
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(

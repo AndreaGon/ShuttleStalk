@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:shuttle_stalk/models/bookings.dart';
 import 'package:uuid/uuid.dart';
 
@@ -32,10 +33,14 @@ class BookingVM {
 
 
   Stream getAllBookingsStudentId(String studentId){
+    DateTime dateToday = DateTime.now();
+    String formattedDate = DateFormat("yyyy-MM-dd").format(dateToday);
     Stream<QuerySnapshot> querySnapshot=  bookingRef
         .where('studentId', isEqualTo: studentId)
         .where('attendance_marked', isEqualTo: false)
         .where('is_invalid', isEqualTo: false)
+        .orderBy('date')
+        .where('date', isGreaterThanOrEqualTo: formattedDate)
         .snapshots();
     return querySnapshot;
   }
@@ -71,7 +76,9 @@ class BookingVM {
       "studentId": bookings.studentId,
       "routeId": bookings.routeId,
       "attendance_marked": false,
-      "is_invalid": false
+      "is_invalid": false,
+      "studentName": bookings.studentName,
+      "studentMatriculation": bookings.studentMatriculation
     });
   }
 

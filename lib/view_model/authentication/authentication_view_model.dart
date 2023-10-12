@@ -12,7 +12,7 @@ class AuthenticationVM {
 
   CollectionReference students = FirebaseFirestore.instance.collection('students');
 
-  Future<void> registerUser(BuildContext context, String fullname, String program, String ic_number, String month, String year, String email, String password) async {
+  Future<void> registerUser(BuildContext context, String fullname, String program, String matriculation, String month, String year, String email, String password) async {
     try {
       final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
@@ -21,11 +21,11 @@ class AuthenticationVM {
       var uuid = Uuid();
       var uuidV4 = uuid.v4();
 
-      students.doc().set({
+      students.doc(uuidV4).set({
         'id': uuidV4,
         'fullname': fullname,
         'program': program,
-        'ic_number': ic_number,
+        'matriculation': matriculation,
         'graduation_month': month,
         'graduation_year': year,
         'email': email,
