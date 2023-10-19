@@ -159,6 +159,8 @@ class _RegistrationState extends State<Registration> {
                             if(formKey.currentState!.validate()){
                               AuthenticationVM().registerUser(context, username.text.trim(), program.text.trim(), matriculation.text.trim(), graduation_month, graduation_year, email.text.trim(), password.text.trim());
                             }
+
+                            print("VALIDATE: " + (formKey.currentState!.validate().toString()));
                           },
                           child: const Text("Register")
                       ),

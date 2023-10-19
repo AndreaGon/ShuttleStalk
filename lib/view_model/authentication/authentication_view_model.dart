@@ -32,7 +32,7 @@ class AuthenticationVM {
         'userAuthId': credential.user?.uid,
         'no_show': 0,
         'is_active_account': true
-      }).then((value) => {}).catchError((error) => print("Failed to add book: $error"));
+      }).then((value) => {}).catchError((error) => print("Failed to add: $error"));
 
 
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -45,9 +45,18 @@ class AuthenticationVM {
       );
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
-        print('The password provided is too weak.');
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("The password provided is too weak."),
+        ));
       } else if (e.code == 'email-already-in-use') {
-        print('The account already exists for that email.');
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("The account already exists for that email."),
+        ));
+      }
+      else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("Failed to register! Please fill all the details required"),
+        ));
       }
     } catch (e) {
       print(e);

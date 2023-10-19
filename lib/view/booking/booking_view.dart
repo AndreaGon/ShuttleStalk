@@ -5,17 +5,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shuttle_stalk/models/bookings.dart';
-import 'package:shuttle_stalk/models/locations.dart';
+import 'package:shuttle_stalk/models/journeys.dart';
 import 'package:shuttle_stalk/res/colors.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shuttle_stalk/view/booking/layout/booking_dropdown_layout.dart';
-import 'package:shuttle_stalk/res/layout/bottom_nav_layout.dart';
-import 'package:shuttle_stalk/view/authentication/login_view.dart';
-import 'package:shuttle_stalk/view_model/authentication/authentication_view_model.dart';
-import 'package:shuttle_stalk/view_model/realtime/realtime_view_model.dart';
 
+import 'package:shuttle_stalk/view_model/authentication/authentication_view_model.dart';
 import '../../view_model/booking/booking_view_model.dart';
-import '../notification/notification_list_view.dart';
+import '../../view_model/journey/journey_view_model.dart';
 class Booking extends StatefulWidget {
   const Booking({ super.key });
 
@@ -26,7 +22,7 @@ class Booking extends StatefulWidget {
 class _BookingState extends State<Booking> {
 
   final BookingVM bookingVM = BookingVM();
-  final RealTimeVM realtimeVM = RealTimeVM();
+  final JourneyVM journeyVM = JourneyVM();
   final AuthenticationVM authVM = AuthenticationVM();
 
   DateTime dateToday = DateTime.now();
@@ -51,7 +47,7 @@ class _BookingState extends State<Booking> {
       studentMatriculation: ''
   );
 
-  Locations location = Locations(routeId: "", time: "", date: "", shuttleLocation: "", shuttlePlateNo: '', isJourneyStarted: false, driverId: '', routeName: '', pickupDropoff: '', bookingLocations: '');
+  Journeys journey = Journeys(routeId: "", time: "", date: "", shuttleLocation: "", shuttlePlateNo: '', isJourneyStarted: false, driverId: '', routeName: '', pickupDropoff: '', bookingLocations: '');
 
   @override
   Widget build(BuildContext context) {
@@ -401,14 +397,14 @@ class _BookingState extends State<Booking> {
                                   ))
                                 }
                                 else{
-                                  location.pickupDropoff = currentBooking.pickupDropoff,
-                                  location.routeName = currentBooking.routeName,
-                                  location.routeId = currentBooking.routeId,
-                                  location.time = currentBooking.time,
-                                  location.date = currentBooking.date,
-                                  location.shuttleLocation = "",
-                                  location.shuttlePlateNo = "",
-                                  location.isJourneyStarted = false,
+                                  journey.pickupDropoff = currentBooking.pickupDropoff,
+                                  journey.routeName = currentBooking.routeName,
+                                  journey.routeId = currentBooking.routeId,
+                                  journey.time = currentBooking.time,
+                                  journey.date = currentBooking.date,
+                                  journey.shuttleLocation = "",
+                                  journey.shuttlePlateNo = "",
+                                  journey.isJourneyStarted = false,
 
                                   bookingVM.getRouteInfoId(currentBooking.routeId).then((route) => {
                                     routeData = route.data(),
@@ -418,21 +414,21 @@ class _BookingState extends State<Booking> {
                                       bookingVM.getNumberOfBooking(currentBooking.routeId, currentBooking.date, currentBooking.time).then((bookingNumber) => {
                                         if(bookingNumber < shuttleInfo["seats"]){
                                           setState(() {
-                                            location.driverId = routeData["driverId"];
-                                            location.shuttlePlateNo = shuttleInfo["plateNo"];
-                                            location.bookingLocations = currentBooking.route;
+                                            journey.driverId = routeData["driverId"];
+                                            journey.shuttlePlateNo = shuttleInfo["plateNo"];
+                                            journey.bookingLocations = currentBooking.route;
                                             isFirstPartVisible = false;
                                             isSecondPartVisible = false;
                                             isThirdPartVisible = true;
                                             bookingVM.addBooking(currentBooking).then((value) => {
-                                              realtimeVM.isLocationRefExisting(location.routeId, location.date, location.time).then((locationDoc) => {
+                                              journeyVM.isLocationRefExisting(journey.routeId, journey.date, journey.time).then((locationDoc) => {
                                                 if(locationDoc == null){
-                                                  realtimeVM.addLocation(location).then((value)=> {
+                                                  journeyVM.addLocation(journey).then((value)=> {
                                                   })
                                                 }
                                                 else{
                                                   locationData = locationDoc.docs.first.data(),
-                                                  realtimeVM.updateLocationList(locationData["id"], location).then((value) => {})
+                                                  journeyVM.updateLocationList(locationData["id"], journey).then((value) => {})
                                                 },
                                               }),
                                             });

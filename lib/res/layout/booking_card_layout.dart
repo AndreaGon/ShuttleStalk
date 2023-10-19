@@ -2,10 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shuttle_stalk/res/colors.dart';
-import 'package:shuttle_stalk/view/realtime/realtime_view.dart';
+import 'package:shuttle_stalk/view/journey/journey_view.dart';
+import 'package:shuttle_stalk/view_model/journey/journey_view_model.dart';
 
 import '../../view_model/booking/booking_view_model.dart';
-import '../../view_model/realtime/realtime_view_model.dart';
 
 class BookingCardLayout extends StatelessWidget {
   final String routeName;
@@ -24,7 +24,7 @@ class BookingCardLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final RealTimeVM realTimeVM = RealTimeVM();
+    final JourneyVM journeyVM = JourneyVM();
     final BookingVM bookingVM = BookingVM();
 
     return Padding(
@@ -79,8 +79,7 @@ class BookingCardLayout extends StatelessWidget {
                       var shuttleId;
                       var shuttleData;
                       var locationData;
-                      realTimeVM.getRealTimeLocationFuture(routeId, bookingDate, bookingTime).then((value) => {
-                        locationData = value.docs.first.data()["booking_locations"],
+                      journeyVM.getRealTimeLocationFuture(routeId, bookingDate, bookingTime).then((value) => {
                         isJourneyStarted = value.docs.first.data()["is_journey_started"],
                         currentDriverLocation = value.docs.first.data()["shuttleLocation"],
                         bookingVM.getRouteInfoId(routeId).then((value) => {
@@ -91,7 +90,7 @@ class BookingCardLayout extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => RealTimeView(allSourceLocation: locationData, sourceLocation: sourceLocation, bookingId: bookingId, bookingDate: bookingDate, bookingTime: bookingTime, routeId: routeId, shuttleData: shuttleData),
+                                    builder: (context) => JourneyView(sourceLocation: sourceLocation, bookingId: bookingId, bookingDate: bookingDate, bookingTime: bookingTime, routeId: routeId, shuttleData: shuttleData),
                                   ),
                                 )
                               }

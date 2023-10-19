@@ -1,45 +1,36 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:math';
-import 'dart:typed_data';
-import 'package:dio/dio.dart';
-import 'package:google_maps_utils/google_maps_utils.dart' as utils;
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'dart:math' as math;
-import 'package:easy_geofencing/easy_geofencing.dart';
-import 'package:easy_geofencing/enums/geofence_status.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:shuttle_stalk/view_model/realtime/realtime_view_model.dart';
+import 'package:shuttle_stalk/view_model/journey/journey_view_model.dart';
 
 import '../../res/colors.dart';
 import '../../view_model/booking/booking_view_model.dart';
 
 import '../../res/env.dart' as ENV;
 
-class RealTimeView extends StatefulWidget {
+class JourneyView extends StatefulWidget {
   GeoPoint sourceLocation;
   String bookingId;
   String bookingDate;
   String bookingTime;
   String routeId;
-  List<dynamic> allSourceLocation;
   Map<String, dynamic> shuttleData;
 
-  RealTimeView({Key? key, required this.allSourceLocation, required this.sourceLocation, required this.bookingId, required this.bookingDate, required this.bookingTime, required this.routeId, required this.shuttleData}) : super(key: key);
+  JourneyView({Key? key, required this.sourceLocation, required this.bookingId, required this.bookingDate, required this.bookingTime, required this.routeId, required this.shuttleData}) : super(key: key);
 
   @override
-  State<RealTimeView> createState() => _RealTimeViewState();
+  State<JourneyView> createState() => _JourneyViewState();
 }
 
-class _RealTimeViewState extends State<RealTimeView> {
+class _JourneyViewState extends State<JourneyView> {
 
   Completer<GoogleMapController> _controller = Completer();
   final BookingVM bookingVM = BookingVM();
-  final RealTimeVM realTimeVM = RealTimeVM();
+  final JourneyVM journeyVM = JourneyVM();
 
   var waypoint;
   var distanceTime;
@@ -85,7 +76,7 @@ class _RealTimeViewState extends State<RealTimeView> {
       body: Stack(
         children: [
           StreamBuilder(
-            stream: realTimeVM.getRealTimeLocation(widget.routeId, widget.bookingDate, widget.bookingTime),
+            stream: journeyVM.getRealTimeLocation(widget.routeId, widget.bookingDate, widget.bookingTime),
             builder: (context, AsyncSnapshot snapshot) {
               if(!snapshot.hasData){
 
@@ -302,22 +293,6 @@ class _RealTimeViewState extends State<RealTimeView> {
         ],
       ),
     );
-  }
-
-  void initAllSourceLocation() {
-    LatLng bookingLocations = LatLng(0.0,0.0);
-    double isSame = 0.0;
-    for(var i = 0; i < widget.allSourceLocation.length; i++){
-      bookingLocations = LatLng(widget.allSourceLocation[i].latitude, widget.allSourceLocation[i].longitude);
-      isSame = Geolocator.distanceBetween(bookingLocations.latitude, bookingLocations.longitude, widget.sourceLocation.latitude, widget.sourceLocation.longitude);
-      if(isSame == 0.0){
-        markers.add(Marker(markerId: MarkerId("location"), position: bookingLocations));
-      }
-      else{
-        markers.add(Marker(markerId: MarkerId("location"), position: bookingLocations, icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen)));
-      }
-
-    }
   }
 
   void setCustomMarkerIcon() async{

@@ -1,4 +1,4 @@
-class Locations {
+class Journeys {
   String routeName;
   String routeId;
   String date;
@@ -10,7 +10,7 @@ class Locations {
   String pickupDropoff;
   String bookingLocations;
 
-  Locations({
+  Journeys({
     required this.routeName,
     required this.routeId,
     required this.time,
@@ -23,8 +23,8 @@ class Locations {
     required this.bookingLocations
   });
 
-  factory Locations.fromJson(Map<String, dynamic> parsedJson){
-    return Locations(
+  factory Journeys.fromJson(Map<String, dynamic> parsedJson){
+    return Journeys(
       routeName: parsedJson['routeName'].toString(),
       routeId: parsedJson['routeId'].toString(),
       time: parsedJson['time'].toString(),

@@ -4,16 +4,16 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../models/locations.dart';
+import '../../models/journeys.dart';
 
-class RealTimeVM {
+class JourneyVM {
   CollectionReference routes = FirebaseFirestore.instance.collection('routes');
-  CollectionReference locationRef = FirebaseFirestore.instance.collection('locations');
+  CollectionReference journeyRef = FirebaseFirestore.instance.collection('journeys');
 
   Future isLocationRefExisting(String routeId, String date, String time) async{
     try {
       // Perform a "where" query with multiple conditions and limit to one document
-      QuerySnapshot querySnapshot = await locationRef
+      QuerySnapshot querySnapshot = await journeyRef
           .where('routeId', isEqualTo: routeId) // Replace with your field and value
           .where('date', isEqualTo: date)
           .where('time', isEqualTo: time)
@@ -35,7 +35,7 @@ class RealTimeVM {
   }
 
   Future getRealTimeLocationFuture(String routeId, String date, String time) async{
-    QuerySnapshot querySnapshot = await locationRef
+    QuerySnapshot querySnapshot = await journeyRef
         .where('routeId', isEqualTo: routeId) // Replace with your field and value
         .where('date', isEqualTo: date)
         .where('time', isEqualTo: time)
@@ -46,7 +46,7 @@ class RealTimeVM {
   }
 
   Stream getRealTimeLocation(String routeId, String date, String time){
-    Stream<QuerySnapshot> querySnapshot = locationRef
+    Stream<QuerySnapshot> querySnapshot = journeyRef
         .where('routeId', isEqualTo: routeId) // Replace with your field and value
         .where('date', isEqualTo: date)
         .where('time', isEqualTo: time)
@@ -66,13 +66,13 @@ class RealTimeVM {
       );
   }
 
-  Future<void> addLocation(Locations locations) async {
+  Future<void> addLocation(Journeys journeys) async {
     var uuid = Uuid();
     var uuidV4 = uuid.v4();
     var waypoint;
 
     LatLng sourceLocation = LatLng(0.0, 0.0);
-    String validJson = (locations.bookingLocations).replaceAllMapped(
+    String validJson = (journeys.bookingLocations).replaceAllMapped(
       RegExp(r'(\w+):'), // Match unquoted keys
           (Match match) => '"${match.group(1)}":', // Add double quotes to keys
     );
@@ -82,26 +82,26 @@ class RealTimeVM {
 
     GeoPoint sourceGeopoint = GeoPoint(sourceLocation.latitude, sourceLocation.longitude);
 
-    locationRef.doc(uuidV4).set({
+    journeyRef.doc(uuidV4).set({
       "id": uuidV4,
-      "routeName": locations.routeName,
-      "routeId": locations.routeId,
-      "time": locations.time,
-      "date": locations.date,
+      "routeName": journeys.routeName,
+      "routeId": journeys.routeId,
+      "time": journeys.time,
+      "date": journeys.date,
       "shuttleLocation": null,
-      "driverId": locations.driverId,
-      "is_journey_started": locations.isJourneyStarted,
+      "driverId": journeys.driverId,
+      "is_journey_started": journeys.isJourneyStarted,
       "is_journey_finished": false,
-      "pickupDropoff": locations.pickupDropoff,
+      "pickupDropoff": journeys.pickupDropoff,
       "booking_locations": [sourceGeopoint]
     });
   }
 
-  Future<void> updateLocationList(String id, Locations locations) async {
+  Future<void> updateLocationList(String id, Journeys journeys) async {
     var waypoint;
 
     LatLng sourceLocation = LatLng(0.0, 0.0);
-    String validJson = (locations.bookingLocations).replaceAllMapped(
+    String validJson = (journeys.bookingLocations).replaceAllMapped(
       RegExp(r'(\w+):'), // Match unquoted keys
           (Match match) => '"${match.group(1)}":', // Add double quotes to keys
     );
@@ -111,7 +111,7 @@ class RealTimeVM {
 
     GeoPoint sourceGeopoint = GeoPoint(sourceLocation.latitude, sourceLocation.longitude);
 
-    locationRef.doc(id).update({
+    journeyRef.doc(id).update({
       "booking_locations": FieldValue.arrayUnion([sourceGeopoint])
     });
   }
