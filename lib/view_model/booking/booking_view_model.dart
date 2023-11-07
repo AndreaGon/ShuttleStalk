@@ -52,7 +52,6 @@ class BookingVM {
   Future<void> addBooking(Bookings bookings) async {
     var uuid = Uuid();
     var uuidV4 = uuid.v4();
-
     var waypoint;
 
     LatLng sourceLocation = LatLng(0.0, 0.0);
@@ -90,12 +89,11 @@ class BookingVM {
 
   Future<int> getNumberOfBooking(String routeId, String date, String time) async{
     QuerySnapshot querySnapshotBooking = await bookingRef
-        .where('routeId', isEqualTo: routeId) // Replace with your field and value
+        .where('routeId', isEqualTo: routeId)
         .where('date', isEqualTo: date)
-        .where('time', isEqualTo: time) // Limit the result to one document
+        .where('time', isEqualTo: time)
         .get();
-
-    // Check if there are any matching documents
+    
     return querySnapshotBooking.size;
   }
 

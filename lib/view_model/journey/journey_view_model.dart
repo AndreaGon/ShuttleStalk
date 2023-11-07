@@ -36,7 +36,7 @@ class JourneyVM {
 
   Future getRealTimeLocationFuture(String routeId, String date, String time) async{
     QuerySnapshot querySnapshot = await journeyRef
-        .where('routeId', isEqualTo: routeId) // Replace with your field and value
+        .where('routeId', isEqualTo: routeId)
         .where('date', isEqualTo: date)
         .where('time', isEqualTo: time)
         .limit(1) // Limit the result to one document
@@ -47,7 +47,7 @@ class JourneyVM {
 
   Stream getRealTimeLocation(String routeId, String date, String time){
     Stream<QuerySnapshot> querySnapshot = journeyRef
-        .where('routeId', isEqualTo: routeId) // Replace with your field and value
+        .where('routeId', isEqualTo: routeId)
         .where('date', isEqualTo: date)
         .where('time', isEqualTo: time)
         .limit(1)
